@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PalmPay">
+<meta name="theme-color" content="#ffffff">
+<title>PalmPay</title>
+<link rel="manifest" id="mf-link">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+/* ─── BASE ─── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --g:#2E7D32;--gl:#A5D6A7;--gp:#E8F5E9;--gb:#F4FAF4;
+  --td:#1A2520;--ts:#7A9185;--tm:#B0C4B8;--bd:#E0EDE0;
+  --red:#E53935;--rp:#FFEBEE;
+  --st:env(safe-area-inset-top,0px);
+  --sb:env(safe-area-inset-bottom,0px);
+  /* Fluid spacing — scales with viewport */
+  --sp-xs: clamp(6px,  1.2vw,  10px);
+  --sp-sm: clamp(10px, 2vw,    16px);
+  --sp-md: clamp(14px, 3vw,    24px);
+  --sp-lg: clamp(20px, 4.5vw,  36px);
+  --sp-xl: clamp(28px, 6vw,    48px);
+  /* Fluid font sizes */
+  --fs-xs:  clamp(10px, 2.2vw, 13px);
+  --fs-sm:  clamp(12px, 2.6vw, 14px);
+  --fs-md:  clamp(14px, 3vw,   16px);
+  --fs-lg:  clamp(16px, 3.5vw, 20px);
+  --fs-xl:  clamp(20px, 5vw,   28px);
+  --fs-2xl: clamp(24px, 6.5vw, 40px);
+  --fs-3xl: clamp(38px, 10vw,  60px);
+  /* Fluid radius */
+  --r-sm:  clamp(8px,  1.5vw, 12px);
+  --r-md:  clamp(12px, 2.5vw, 16px);
+  --r-lg:  clamp(14px, 3vw,   20px);
+  --r-xl:  clamp(18px, 4vw,   26px);
+  /* Touch target */
+  --touch: clamp(40px, 8vw, 52px);
+  /* Max content width for tablets/desktop */
+  --max-w: min(480px, 100vw);
+}
+
+html,body{
+  height:100%;width:100%;
+  background:#f0f4f0;
+  font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;
+  overflow:hidden;
+  overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ── App shell — centered card on large screens ── */
+#app{
+  width:100%;height:100%;
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#f0f4f0;
+}
+
+/* The actual phone-sized container */
+#shell{
+  width:var(--max-w);
+  height:100%;
+  max-height:100%;
+  position:relative;
+  overflow:hidden;
+  background:#fff;
+  /* Subtle shadow on tablets/desktop */
+  box-shadow:0 0 0 1px rgba(0,0,0,.06), 0 20px 60px rgba(0,0,0,.15);
+}
+
+/* On true mobile (narrow), shell = full screen */
+@media(max-width:500px){
+  #app{background:#fff}
+  #shell{box-shadow:none;border-radius:0}
+}
+
+/* On wider screens, give rounded corners to the "phone" */
+@media(min-width:500px){
+  #shell{
+    border-radius:clamp(16px,3vw,32px);
+    height:min(100%, 900px);
+    max-height:900px;
+  }
+}
+
+.screen{
+  position:absolute;inset:0;
+  display:none;flex-direction:column;
+  background:#fff;overflow:hidden;
+}
+.screen.active{display:flex}
+/* Show welcome screen immediately before JS executes — prevents white screen */
+#s1{display:flex;flex-direction:column}
+.sir{animation:sir .26s cubic-bezier(.4,0,.2,1) both}
+.sil{animation:sil .26s cubic-bezier(.4,0,.2,1) both}
+.sol{animation:sol .26s cubic-bezier(.4,0,.2,1) both}
+.sor{animation:sor .26s cubic-bezier(.4,0,.2,1) both}
+@keyframes sir{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes sil{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@keyframes sol{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@keyframes sor{from{transform:translateX(0)}to{transform:translateX(100%)}}
+@keyframes dp{0%,100%{opacity:.4;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes br{0%,100%{border-color:rgba(165,214,167,.45)}50%{border-color:rgba(165,214,167,1)}}
+@keyframes sl{0%,100%{top:10%}50%{top:84%}}
+@keyframes pi{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes sp{to{transform:rotate(360deg)}}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+
+/* shared */
+.topbar{
+  display:flex;align-items:center;
+  padding:var(--sp-sm) var(--sp-md) calc(var(--sp-sm) - 2px);
+  gap:var(--sp-sm);
+  flex-shrink:0;background:#fff;
+  border-bottom:1px solid var(--bd);
+  padding-top:max(var(--sp-sm), calc(var(--sp-sm) + env(safe-area-inset-top, 0px)));
+}
+.bk{
+  width:var(--touch);height:var(--touch);
+  background:var(--gp);border-radius:var(--r-sm);
+  border:none;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;transition:background .15s;touch-action:manipulation}
+.bk:active{background:var(--gl)}
+.bk svg{width:clamp(16px,3.2vw,20px);height:clamp(16px,3.2vw,20px)}
+.tt{font-size:var(--fs-md);font-weight:600;color:var(--td);flex:1}
+.btn{
+  width:100%;
+  padding:clamp(13px,2.8vw,17px);
+  border:none;border-radius:var(--r-lg);
+  font-family:-apple-system,'DM Sans',sans-serif;
+  font-size:var(--fs-md);font-weight:600;
+  cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:opacity .15s,transform .1s;
+  min-height:var(--touch);touch-action:manipulation}
+.btn:active{opacity:.88;transform:scale(.98)}
+.bg{background:var(--g);color:#fff;box-shadow:0 4px 18px rgba(46,125,50,.28)}
+.bp{background:var(--gp);color:var(--g)}
+.br2{background:var(--rp);color:var(--red)}
+.sb{
+  height:max(var(--sb), env(safe-area-inset-bottom, 0px));
+  background:#fff;flex-shrink:0;
+  min-height:max(var(--sb), 8px);
+}
+.li{
+  width:clamp(30px,6.5vw,38px);height:clamp(30px,6.5vw,38px);
+  background:var(--g);border-radius:clamp(8px,2vw,12px);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.li svg{width:clamp(16px,3.5vw,22px);height:clamp(16px,3.5vw,22px)}
+.lt{font-size:clamp(15px,3.5vw,19px);font-weight:700;color:var(--td);letter-spacing:-.3px}
+.lr{display:flex;align-items:center;gap:var(--sp-xs)}
+.btn svg,.li svg,.bk svg,.prof-del svg{display:block;flex-shrink:0}
+
+/* ─── S1 WELCOME ─── */
+#s1{overflow-y:auto}
+.s1w{
+  padding:var(--sp-md) var(--sp-lg) var(--sp-xl);
+  display:flex;flex-direction:column;
+  min-height:100%;
+  -webkit-overflow-scrolling:touch;
+}
+.s1il{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:clamp(16px,4vw,32px) 0 clamp(12px,3vw,24px);
+  position:relative;min-height:clamp(180px,40vh,280px);
+}
+.s1pm{
+  width:clamp(100px,24vw,140px);height:clamp(168px,40vw,236px);
+  background:#1A2520;border-radius:clamp(18px,4vw,28px);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  box-shadow:0 16px 48px rgba(26,37,32,.35);
+}
+.s1fr{
+  width:clamp(60px,14vw,84px);height:clamp(72px,17vw,100px);
+  border:1.5px solid rgba(165,214,167,.6);border-radius:12px;
+  position:relative;display:flex;align-items:center;justify-content:center;
+}
+.s1fr::before,.s1fr::after,.s1fi::before,.s1fi::after{content:'';position:absolute;width:15px;height:15px;border-color:#A5D6A7;border-style:solid}
+.s1fr::before{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:5px 0 0 0}
+.s1fr::after{top:-2px;right:-2px;border-width:3px 3px 0 0;border-radius:0 5px 0 0}
+.s1fi::before{bottom:-2px;left:-2px;border-width:0 0 3px 3px;border-radius:0 0 0 5px}
+.s1fi::after{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 5px 0}
+.s1sl{position:absolute;width:64px;height:1.5px;background:linear-gradient(90deg,transparent,#A5D6A7,transparent);animation:sl 2s ease-in-out infinite}
+.s1dt{width:6px;height:6px;background:#A5D6A7;border-radius:50%;animation:dp 1.5s ease-in-out infinite}
+.s1hd{position:absolute;right:clamp(-16px,-3vw,-4px);top:50%;transform:translateY(-55%)}
+.s1hd svg{width:clamp(66px,16vw,92px);height:auto}
+.s1h1{
+  font-family:'DM Serif Display',serif;
+  font-size:var(--fs-xl);line-height:1.25;
+  color:var(--td);letter-spacing:-.4px;
+  margin-bottom:var(--sp-sm);
+}
+.s1sb{font-size:var(--fs-sm);color:var(--ts);line-height:1.65;margin-bottom:var(--sp-lg)}
+.s1sc{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:var(--sp-sm)}
+.s1sc span{font-size:var(--fs-xs);color:var(--tm)}
+
+/* ─── S-REG ─── */
+#sreg{overflow-y:auto;-webkit-overflow-scrolling:touch}
+.srb{flex:1;padding:var(--sp-lg) var(--sp-md);display:flex;flex-direction:column;gap:var(--sp-md);overflow-y:auto}
+.fl{font-size:var(--fs-xs);font-weight:600;letter-spacing:.8px;color:var(--ts);text-transform:uppercase;margin-bottom:clamp(6px,1.5vw,10px)}
+.fi{width:100%;padding:clamp(12px,2.5vw,16px);border:1.5px solid var(--bd);border-radius:var(--r-md);font-family:-apple-system,'DM Sans',sans-serif;font-size:max(16px,var(--fs-md));color:var(--td);background:#fff;outline:none;transition:border-color .2s;min-height:var(--touch)}
+.fi:focus{border-color:var(--g)}
+.fi::placeholder{color:var(--tm)}
+.snote{background:var(--gp);border-radius:var(--r-md);padding:var(--sp-sm) var(--sp-md);font-size:var(--fs-sm);color:var(--g);line-height:1.6}
+.ssteps{display:flex;flex-direction:column;gap:var(--sp-xs)}
+.sstep{display:flex;align-items:center;gap:var(--sp-sm);font-size:var(--fs-sm);color:var(--ts)}
+.snum{width:clamp(22px,5vw,28px);height:clamp(22px,5vw,28px);background:var(--gp);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:700;color:var(--g);flex-shrink:0}
+
+/* ─── S-SCAN (camera) ─── */
+#sscan{background:#fff}
+.scw{flex:1;position:relative;background:#0C1A0D;overflow:hidden;min-height:0}
+video#sv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0;transition:opacity .5s}
+video#sv.rdy{opacity:1}
+canvas#sc{position:absolute;inset:0;width:100%;height:100%}
+.suio{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.szone{width:clamp(160px,42vw,220px);height:clamp(192px,52vw,264px);position:relative}
+.szc{position:absolute;width:clamp(22px,5vw,30px);height:clamp(22px,5vw,30px);border-style:solid;animation:br 2.2s ease-in-out infinite}
+.szc.tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:7px 0 0 0}
+.szc.tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 7px 0 0}
+.szc.bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 7px}
+.szc.br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 7px 0}
+.szone.w .szc{border-color:rgba(165,214,167,.45)}
+.szone.d .szc,.szone.s .szc{border-color:#A5D6A7;animation:none}
+.szsl{position:absolute;left:10px;right:10px;height:2px;background:linear-gradient(90deg,transparent,rgba(165,214,167,.9),transparent);box-shadow:0 0 12px rgba(165,214,167,.6);display:none;animation:sl 2.5s ease-in-out infinite}
+.szone.d .szsl,.szone.s .szsl{display:block}
+.sztips{position:absolute;top:-16px;left:0;right:0;display:flex;justify-content:space-around;padding:0 10px}
+.sztd{width:8px;height:8px;border-radius:50%;background:rgba(165,214,167,.4);animation:dp 2s ease-in-out infinite}
+.sflash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .08s}
+.cio{position:absolute;inset:0;background:#0C1A0D;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10}
+.cisp{width:44px;height:44px;border-radius:50%;border:3px solid rgba(165,214,167,.2);border-top-color:#A5D6A7;animation:sp 1s linear infinite}
+.citxt{color:#A5D6A7;font-size:var(--fs-sm);font-weight:500;text-align:center;padding:0 28px}
+.camdist{
+  display:none;
+  align-items:center;
+  gap:4px;
+  margin-left:auto;
+  font-size:11px;
+  font-weight:600;
+  color:var(--ts);
+}
+.lvp{
+  position:absolute;inset:0;
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  padding:0 var(--sp-md) clamp(52px,14vh,96px);
+  z-index:20;
+  pointer-events:none;
+}
+.lvp-box{
+  width:100%;
+  max-width:360px;
+  background:rgba(12,26,13,.88);
+  border:1.5px solid rgba(165,214,167,.5);
+  border-radius:16px;
+  padding:12px 20px;
+  text-align:center;
+  backdrop-filter:blur(8px);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  pointer-events:auto;
+}
+.ceo{position:absolute;inset:0;background:rgba(12,26,13,.93);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:var(--sp-lg);z-index:20;text-align:center}
+.ceo.show{display:flex;animation:fi .3s ease both}
+.cet{color:#fff;font-size:var(--fs-lg);font-weight:700}
+.cem{color:rgba(165,214,167,.7);font-size:var(--fs-sm);line-height:1.7;white-space:pre-line}
+.ssb2{padding:clamp(10px,2.5vw,16px) var(--sp-md) clamp(8px,2vw,12px);background:#fff;flex-shrink:0}
+.spl{font-size:var(--fs-sm);font-weight:600;text-align:center;margin-bottom:clamp(6px,1.5vw,10px);min-height:20px;transition:color .3s}
+.spt{height:4px;background:var(--bd);border-radius:2px;overflow:hidden;margin-bottom:4px}
+.spb{height:100%;border-radius:2px;width:0%;transition:width .2s ease,background .3s}
+.ssl{font-size:var(--fs-xs);color:var(--tm);text-align:center;margin-bottom:4px}
+.shdt{height:3px;background:var(--bd);border-radius:2px;overflow:hidden}
+.shdf{height:100%;background:#F0C040;border-radius:2px;width:0%;transition:width .1s ease}
+
+/* ─── S3 AMOUNT ─── */
+#s3{background:#fff}
+.s3b{flex:1;padding:var(--sp-md) var(--sp-md) clamp(8px,2vw,14px);display:flex;flex-direction:column;overflow:hidden}
+.al{font-size:var(--fs-xs);font-weight:600;letter-spacing:.8px;color:var(--ts);text-transform:uppercase;margin-bottom:clamp(8px,2vw,12px)}
+.ad{display:flex;align-items:baseline;gap:6px;padding:clamp(10px,2.5vw,14px) 0 clamp(12px,3vw,16px);border-bottom:2.5px solid var(--g);margin-bottom:clamp(10px,2.5vw,16px)}
+.ac{font-size:clamp(22px,5.5vw,32px);font-weight:300;color:var(--g)}
+.av{font-family:'DM Serif Display',serif;font-size:clamp(38px,10vw,60px);letter-spacing:-2px;line-height:1;color:var(--td);min-width:40px}
+.acu{width:2.5px;height:clamp(40px,9vw,56px);background:var(--g);border-radius:2px;animation:bl 1s step-end infinite;margin-left:2px}
+.qr{display:flex;gap:clamp(6px,1.5vw,10px);margin-bottom:clamp(10px,2.5vw,16px)}
+.qb{flex:1;padding:clamp(8px,2vw,10px) 4px;background:var(--gp);border:none;border-radius:var(--r-sm);font-family:-apple-system,'DM Sans',sans-serif;font-size:var(--fs-sm);font-weight:600;color:var(--g);cursor:pointer;min-height:var(--touch)}
+.qb:active{background:var(--gl)}
+.np{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(4px,1vw,7px);min-height:0}
+.key{display:flex;align-items:center;justify-content:center;border-radius:var(--r-md);border:none;font-family:-apple-system,'DM Sans',sans-serif;font-size:clamp(20px,5vw,28px);font-weight:400;color:var(--td);cursor:pointer;background:var(--gb);min-height:clamp(44px,10vw,62px);touch-action:manipulation}
+.key:active{background:var(--gp);transform:scale(.94)}
+.key.emp{background:transparent;pointer-events:none}
+.key.del{background:transparent}
+.key.del:active{background:var(--gp)}
+.s3f{padding:clamp(8px,2vw,12px) var(--sp-md) clamp(8px,2vw,12px);flex-shrink:0}
+
+/* ─── S4 CONFIRM ─── */
+#s4{background:#fff}
+.s4card{margin:var(--sp-sm) var(--sp-sm) 0;background:var(--gp);border-radius:var(--r-xl);padding:var(--sp-md);flex-shrink:0}
+.s4mr{display:flex;align-items:center;gap:var(--sp-sm);padding-bottom:var(--sp-sm);border-bottom:1px solid rgba(165,214,167,.5);margin-bottom:var(--sp-sm)}
+.mi{width:var(--touch);height:var(--touch);background:#fff;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:clamp(18px,4.5vw,26px);box-shadow:0 2px 10px rgba(46,125,50,.1);flex-shrink:0}
+.mn{font-size:var(--fs-md);font-weight:600;color:var(--td)}
+.ms{font-size:var(--fs-xs);color:var(--ts);margin-top:2px}
+.s4am{font-family:'DM Serif Display',serif;font-size:clamp(28px,7.5vw,42px);letter-spacing:-1px;color:var(--td);margin-bottom:2px}
+.s4as{font-size:var(--fs-xs);color:var(--ts)}
+.s4cw{flex:1;background:#0C1A0D;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
+.s4cw::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,.01) 3px,rgba(255,255,255,.01) 4px)}
+.s4fr{width:clamp(120px,35vw,168px);height:clamp(148px,43vw,208px);position:relative;display:flex;align-items:center;justify-content:center}
+.s4c{position:absolute;width:clamp(18px,4.5vw,26px);height:clamp(18px,4.5vw,26px);border-style:solid;border-color:rgba(165,214,167,.55);animation:br 2.2s ease-in-out infinite}
+.s4c.tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:5px 0 0 0}
+.s4c.tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 5px 0 0}
+.s4c.bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 5px}
+.s4c.br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 5px 0}
+.s4sl{position:absolute;left:8px;right:8px;height:1.5px;background:linear-gradient(90deg,transparent,rgba(165,214,167,.85),transparent);box-shadow:0 0 8px rgba(165,214,167,.4);animation:sl 2.5s ease-in-out infinite}
+.s4ht{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(12,26,13,.85);padding:7px 16px;border-radius:20px;font-size:var(--fs-xs);color:#A5D6A7;backdrop-filter:blur(4px)}
+.s4ft{padding:clamp(10px,2.5vw,16px) var(--sp-sm) clamp(8px,2vw,12px);flex-shrink:0}
+
+/* ─── S5 SUCCESS ─── */
+#s5{background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.s5b{flex:1;padding:var(--sp-md) var(--sp-lg) var(--sp-xl);display:flex;flex-direction:column;align-items:center}
+.src{width:clamp(72px,18vw,96px);height:clamp(72px,18vw,96px);background:linear-gradient(135deg,#66BB6A,#2E7D32);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:clamp(14px,3.5vw,22px);box-shadow:0 10px 36px rgba(46,125,50,.3);animation:pi .4s cubic-bezier(.175,.885,.32,1.275) both}
+.src svg{width:clamp(32px,8vw,44px);height:auto}
+.s5h{font-family:'DM Serif Display',serif;font-size:clamp(20px,5.5vw,28px);color:var(--td);text-align:center;margin-bottom:6px}
+.s5su{font-size:var(--fs-sm);color:var(--ts);text-align:center;margin-bottom:clamp(18px,4.5vw,28px)}
+.rcp{width:100%;background:var(--gp);border-radius:var(--r-xl);padding:4px var(--sp-md);margin-bottom:clamp(18px,4.5vw,28px)}
+.rr{display:flex;justify-content:space-between;align-items:center;padding:clamp(10px,2.5vw,14px) 0;border-bottom:1px solid rgba(165,214,167,.4)}
+.rr:last-child{border-bottom:none}
+.rl{font-size:var(--fs-sm);color:var(--ts)}
+.rv{font-size:var(--fs-sm);font-weight:600;color:var(--td)}
+.rv.big{font-family:'DM Serif Display',serif;font-size:var(--fs-lg);color:var(--g)}
+.s5bt{width:100%;display:flex;gap:clamp(8px,2vw,12px);margin-top:auto}
+
+/* ─── S5E ERROR ─── */
+#s5e{background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.s5eb{flex:1;padding:var(--sp-md) var(--sp-lg) var(--sp-xl);display:flex;flex-direction:column;align-items:center}
+.erc{width:clamp(72px,18vw,96px);height:clamp(72px,18vw,96px);background:linear-gradient(135deg,#EF9A9A,#E53935);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:clamp(14px,3.5vw,22px);box-shadow:0 10px 36px rgba(229,57,53,.24);animation:pi .4s cubic-bezier(.175,.885,.32,1.275) both}
+.erc svg{width:clamp(32px,8vw,44px);height:auto}
+.s5eh{font-family:'DM Serif Display',serif;font-size:clamp(18px,5.5vw,24px);color:var(--td);text-align:center;margin-bottom:6px}
+.s5es{font-size:var(--fs-sm);color:var(--ts);text-align:center;line-height:1.65;margin-bottom:clamp(12px,3vw,18px)}
+.s5esc{font-size:var(--fs-xs);color:var(--ts);text-align:center;margin-bottom:clamp(12px,3vw,18px);font-family:monospace;background:var(--gp);padding:8px 14px;border-radius:8px;width:100%}
+.tips{width:100%;background:var(--rp);border:1px solid #FFCDD2;border-radius:var(--r-lg);padding:var(--sp-sm) var(--sp-md);margin-bottom:clamp(18px,4.5vw,26px)}
+.tip{display:flex;align-items:flex-start;gap:10px;padding:5px 0;font-size:var(--fs-sm);color:#C62828;line-height:1.5}
+.tipd{width:7px;height:7px;background:var(--red);border-radius:50%;flex-shrink:0;margin-top:4px}
+.s5ebt{width:100%;display:flex;gap:clamp(8px,2vw,12px);margin-top:auto}
+
+/* ─── PROCESSING OVERLAY ─── */
+#pov{display:none;position:absolute;inset:0;background:rgba(12,26,13,.92);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#pov.show{display:flex;animation:fi .2s ease both}
+.pring{width:clamp(60px,15vw,80px);height:clamp(60px,15vw,80px);border-radius:50%;border:3px solid rgba(165,214,167,.2);border-top-color:#A5D6A7;border-right-color:#A5D6A7;animation:sp 1s linear infinite}
+.ptxt{color:#A5D6A7;font-size:var(--fs-md);font-weight:500}
+.ppct{color:rgba(165,214,167,.6);font-size:var(--fs-sm)}
+
+/* ─── BOTTOM NAV (home screen) ─── */
+.bnav{
+  display:flex;flex-shrink:0;
+  background:#fff;
+  border-top:1px solid var(--bd);
+  padding-bottom:max(var(--sb),8px);
+}
+.bnav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;
+  padding:10px 4px;border:none;background:transparent;
+  cursor:pointer;-webkit-appearance:none;font-family:-apple-system,'DM Sans',sans-serif;touch-action:manipulation}
+.bnav-btn svg{width:22px;height:22px;transition:transform .15s}
+.bnav-btn span{font-size:10px;font-weight:600;color:var(--tm);letter-spacing:.3px}
+.bnav-btn.active svg{transform:scale(1.1)}
+.bnav-btn.active span{color:var(--g)}
+.bnav-btn:active{opacity:.7}
+
+/* ─── HISTORY SCREEN ─── */
+#shist{background:#fff}
+.hist-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--sp-sm) var(--sp-md);display:flex;flex-direction:column;gap:8px}
+.hist-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--tm)}
+.hist-empty svg{opacity:.3}
+.hist-empty p{font-size:14px;text-align:center;line-height:1.6}
+.tx-card{
+  background:#fff;border:1px solid var(--bd);border-radius:var(--r-lg);
+  padding:12px 14px;display:flex;align-items:center;gap:12px;
+  animation:fi .2s ease both;
+}
+.tx-icon{
+  width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;background:var(--gp);
+}
+.tx-info{flex:1;min-width:0}
+.tx-name{font-size:14px;font-weight:600;color:var(--td);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-meta{font-size:11px;color:var(--ts);margin-top:2px}
+.tx-amount{font-family:'DM Serif Display',serif;font-size:17px;font-weight:700;color:var(--td);flex-shrink:0;white-space:nowrap}
+.hist-stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  padding:var(--sp-sm) var(--sp-md) 0;flex-shrink:0;
+}
+.hist-stat{background:var(--gp);border-radius:var(--r-md);padding:12px 14px}
+.hist-stat-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--g)}
+.hist-stat-lbl{font-size:11px;color:var(--ts);margin-top:2px}
+
+/* ─── PROFILES SCREEN ─── */
+#sprof{background:#fff}
+.prof-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--sp-sm) var(--sp-md);display:flex;flex-direction:column;gap:8px}
+.prof-card{
+  background:#fff;border:1px solid var(--bd);border-radius:var(--r-lg);
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+}
+.prof-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,#A5D6A7,#2E7D32);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:#fff;font-weight:700;flex-shrink:0;
+}
+.prof-info{flex:1;min-width:0}
+.prof-name{font-size:15px;font-weight:600;color:var(--td)}
+.prof-meta{font-size:12px;color:var(--ts);margin-top:2px}
+.prof-badge{
+  display:inline-block;font-size:10px;font-weight:600;
+  padding:2px 8px;border-radius:20px;margin-top:4px;
+  background:var(--gp);color:var(--g);
+}
+.prof-del{
+  width:36px;height:36px;border-radius:10px;border:1px solid #FFCDD2;
+  background:var(--rp);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;
+}
+.prof-del:active{opacity:.7}
+.prof-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--tm)}
+.prof-empty svg{opacity:.3}
+.prof-empty p{font-size:14px;text-align:center;line-height:1.6}
+
+/* Delete confirm modal */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(26,37,32,.6);
+  z-index:500;display:flex;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(4px);animation:fi .2s ease both;
+}
+.modal-box{
+  width:100%;max-width:var(--max-w);
+  background:#fff;border-radius:var(--r-xl) var(--r-xl) 0 0;
+  padding:var(--sp-lg) var(--sp-lg) max(var(--sb),var(--sp-lg));
+}
+.modal-title{font-size:17px;font-weight:700;color:var(--td);margin-bottom:6px}
+.modal-sub{font-size:14px;color:var(--ts);line-height:1.6;margin-bottom:20px}
+.modal-btns{display:flex;flex-direction:column;gap:8px}
+
+@media(max-height:500px) and (orientation:landscape){
+  .s1il{min-height:120px;padding:8px 0}
+  .s1pm{width:80px;height:132px}
+  .s1hd svg{width:60px}
+  .szone{width:clamp(120px,25vh,160px);height:clamp(144px,30vh,192px)}
+  .s4cw{min-height:120px}
+  .src,.erc{width:60px;height:60px;margin-bottom:10px}
+  .srb{gap:10px}
+}
+/* ─── Small phones 320px ─── */
+@media(max-width:360px){
+  :root{--sp-md:12px;--sp-lg:18px}
+  .av{font-size:clamp(32px,9vw,44px)}
+}
+/* ─── Tablets 600px+ ─── */
+@media(min-width:600px){
+  :root{--max-w:440px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="shell">
+
+<!-- ═══ S1 WELCOME ═══ -->
+<div class="screen active" id="s1">
+  <div class="s1w">
+    <div class="lr" style="padding-top:6px;justify-content:center">
+      <div class="li"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C9.2 2 7 4.2 7 7v1H5a1 1 0 00-1 1v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9a1 1 0 00-1-1h-2V7c0-2.8-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3v1H9V7c0-1.7 1.3-3 3-3zm0 9a2 2 0 110 4 2 2 0 010-4z" fill="white"/></svg></div>
+      <span class="lt">Palm Pay</span>
+      <!-- Profile count badge — clickable to view profiles -->
+      <button id="s1-prof-badge" onclick="UI.bnav(2)" style="display:none;margin-left:auto;background:var(--gp);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--g);border:none;cursor:pointer;transition:background .15s"></button>
+    </div>
+    <div class="s1il">
+      <div class="s1pm"><div class="s1fr"><div class="s1fi"></div><div class="s1sl"></div><div class="s1dt"></div></div></div>
+      <div class="s1hd">
+        <svg width="82" height="96" viewBox="0 0 82 96" fill="none">
+          <g filter="url(#f1)">
+            <path d="M20 88L18 51Q17 44 23 42Q29 40 30 46L31 56 31 29Q31 23 37 23Q43 23 43 29L43 49 43 25Q43 19 49 19Q55 19 55 25L55 49 55 31Q55 25 61 25Q67 25 67 31L67 55 70 49Q73 43 78 46Q83 49 80 57L68 88Z" fill="#F5DEB3" stroke="#D4A574" stroke-width="1"/>
+            <path d="M26 62Q40 57 60 60" stroke="#D4A574" stroke-width=".7" fill="none" opacity=".5"/>
+            <path d="M28 52Q41 48 59 51" stroke="#D4A574" stroke-width=".7" fill="none" opacity=".35"/>
+          </g>
+          <circle cx="37" cy="59" r="2.5" fill="#2E7D32" opacity=".75"/>
+          <circle cx="49" cy="56" r="2.5" fill="#2E7D32" opacity=".75"/>
+          <circle cx="60" cy="59" r="2.5" fill="#2E7D32" opacity=".75"/>
+          <circle cx="43" cy="69" r="2" fill="#4CAF50" opacity=".85"/>
+          <circle cx="55" cy="67" r="2" fill="#4CAF50" opacity=".85"/>
+          <defs><filter id="f1" x="-15%" y="-15%" width="130%" height="130%"><feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="#2E7D32" flood-opacity=".2"/></filter></defs>
+        </svg>
+      </div>
+    </div>
+    <h1 class="s1h1">Безопасная оплата<br>без карты и телефона</h1>
+    <p class="s1sb">Оплачивайте покупки мгновенно — достаточно поднести ладонь к камере смартфона.</p>
+    <button id="s1-btn-reg" class="btn bg" onclick="Nav.to('sreg','fwd')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2C9.2 2 7 4.2 7 7v1H5a1 1 0 00-1 1v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9a1 1 0 00-1-1h-2V7c0-2.8-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3v1H9V7c0-1.7 1.3-3 3-3z" fill="white"/></svg>
+      Подключить Palm Pay
+    </button>
+    <button id="s1-btn-pay" class="btn bg" style="display:none;margin-top:10px;background:linear-gradient(135deg,#43A047,#2E7D32)" onclick="App.quickPay()">
+      🤚 Оплатить ладонью
+    </button>
+    <div class="s1sc">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="#B0C4B8"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4z"/></svg>
+      <span>Данные защищены шифрованием</span>
+    </div>
+  </div>
+  <!-- Bottom nav -->
+  <div class="bnav">
+    <button class="bnav-btn active" onclick="UI.bnav(0)">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke="#2E7D32" stroke-width="2" stroke-linejoin="round"/><path d="M9 21V12h6v9" stroke="#2E7D32" stroke-width="2"/></svg>
+      <span style="color:var(--g)">Главная</span>
+    </button>
+    <button class="bnav-btn" onclick="UI.bnav(1)">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#B0C4B8" stroke-width="2"/><path d="M3 10h18M8 15h2m4 0h2" stroke="#B0C4B8" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>История</span>
+    </button>
+    <button class="bnav-btn" onclick="UI.bnav(2)">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#B0C4B8" stroke-width="2"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#B0C4B8" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Профили</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ S-REG NAME ═══ -->
+<div class="screen" id="sreg">
+  <div class="topbar">
+    <button class="bk" onclick="Nav.to('s1','back')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <span class="tt">Регистрация ладони</span>
+  </div>
+  <div class="srb">
+    <div>
+      <div class="fl">Ваше имя</div>
+      <input class="fi" id="regname" type="text" placeholder="Введите имя..." autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
+    </div>
+    <div class="snote">🤚 Мы запишем уникальные биометрические признаки вашей ладони. Данные хранятся только на вашем устройстве.</div>
+    <div class="ssteps">
+      <div class="sstep"><div class="snum">1</div>Введите своё имя</div>
+      <div class="sstep"><div class="snum">2</div>Поднесите ладонь прямо → проверка живости</div>
+      <div class="sstep"><div class="snum">3</div>Ладонь немного влево → снова проверка</div>
+      <div class="sstep"><div class="snum">4</div>Ладонь немного вправо → готово</div>
+    </div>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+      <button class="btn bg" onclick="App.startReg()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M23 7l-7 5 7 5V7z" fill="white"/><rect x="1" y="5" width="15" height="14" rx="2" stroke="white" stroke-width="2" fill="none"/></svg>
+        Начать сканирование
+      </button>
+      <button class="btn bp" onclick="Nav.to('s3','fwd')">Уже зарегистрирован — Оплатить</button>
+    </div>
+  </div>
+  <div class="sb"></div>
+</div>
+
+<!-- ═══ S-SCAN CAMERA ═══ -->
+<div class="screen" id="sscan">
+  <div class="topbar">
+    <button class="bk" id="scanbk" onclick="Scan.stop();Nav.to('sreg','back')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <span class="tt" id="scantitle">Сканирование ладони</span>
+    <!-- Lighting indicator -->
+    <div id="light-indicator" style="display:none;align-items:center;gap:5px;flex-shrink:0">
+      <div id="light-icon" style="font-size:14px">💡</div>
+      <span id="light-text" style="font-size:11px;font-weight:600;color:var(--ts)"></span>
+    </div>
+    <div id="cam-dist" class="camdist">
+      <span id="cam-dist-icon">📏</span>
+      <span id="cam-dist-text">Дистанция OK</span>
+    </div>
+  </div>
+
+  <!-- Multi-angle progress bar (registration only) -->
+  <div id="multi-angle-bar" style="display:none;padding:8px 16px 0;background:#fff;flex-shrink:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:11px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.7px">Сессия регистрации</span>
+      <span id="angle-session-label" style="font-size:11px;font-weight:700;color:var(--g)">1 из 3</span>
+    </div>
+    <div style="display:flex;gap:6px">
+      <div class="angle-dot" id="adot0" style="flex:1;height:4px;background:var(--bd);border-radius:2px;transition:background .3s"></div>
+      <div class="angle-dot" id="adot1" style="flex:1;height:4px;background:var(--bd);border-radius:2px;transition:background .3s"></div>
+      <div class="angle-dot" id="adot2" style="flex:1;height:4px;background:var(--bd);border-radius:2px;transition:background .3s"></div>
+    </div>
+    <div id="angle-hint" style="font-size:11px;color:var(--ts);text-align:center;margin-top:5px">Держите ладонь прямо</div>
+  </div>
+
+  <div class="scw">
+    <video id="sv" autoplay playsinline webkit-playsinline muted></video>
+    <canvas id="sc"></canvas>
+    <div class="suio">
+      <div class="szone w" id="szone">
+        <div class="sztips">
+          <div class="sztd" style="animation-delay:0s"></div>
+          <div class="sztd" style="animation-delay:.25s"></div>
+          <div class="sztd" style="animation-delay:.5s"></div>
+          <div class="sztd" style="animation-delay:.75s"></div>
+          <div class="sztd" style="animation-delay:1s"></div>
+        </div>
+        <div class="szc tl"></div><div class="szc tr"></div>
+        <div class="szc bl"></div><div class="szc br"></div>
+        <div class="szsl"></div>
+      </div>
+    </div>
+    <div class="sflash" id="sflash"></div>
+
+    <!-- Liveness prompt overlay -->
+    <div id="liveness-prompt" class="lvp">
+      <div class="lvp-box" style="animation:fi .3s ease both">
+        <div id="liveness-emoji" style="font-size:28px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;width:100%">☝️</div>
+        <div id="liveness-msg" style="color:#fff;font-size:13px;font-weight:600;white-space:nowrap;text-align:center;width:100%">Согните указательный палец</div>
+        <div style="margin-top:8px;height:3px;background:rgba(165,214,167,.2);border-radius:2px;overflow:hidden;width:100%">
+          <div id="liveness-bar" style="height:100%;width:0%;background:#A5D6A7;border-radius:2px;transition:width .15s ease"></div>
+        </div>
+      </div>
+    </div>
+    <div class="cio" id="cio"><div class="cisp"></div><div class="citxt" id="citxt">Подготовка сканера...</div></div>
+    <div class="ceo" id="ceo">
+      <div style="font-size:44px">📷</div>
+      <div class="cet">Нет доступа к камере</div>
+      <div class="cem" id="cemsg">Разрешите доступ к камере в настройках браузера.</div>
+      <div style="width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px">
+        <button class="btn bg" onclick="Scan.retry()" style="width:100%">🔄 Повторить</button>
+        <button class="btn bp" onclick="Scan.stop();Nav.to('sreg','back')" style="width:100%">← Назад</button>
+      </div>
+    </div>
+  </div>
+  <div class="ssb2">
+    <div class="spl" id="spl" style="color:var(--ts)">Ожидание...</div>
+    <div class="spt"><div class="spb" id="spb"></div></div>
+    <div class="ssl" id="ssl">—</div>
+    <div class="shdt"><div class="shdf" id="shdf"></div></div>
+  </div>
+  <div class="sb"></div>
+</div>
+
+<!-- ═══ S3 AMOUNT ═══ -->
+<div class="screen" id="s3">
+  <div class="topbar">
+    <button class="bk" onclick="Nav.to('s1','back')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <span class="tt">Введите сумму</span>
+  </div>
+  <div class="s3b">
+    <div class="al">Сумма оплаты</div>
+    <div class="ad"><span class="ac">₽</span><span class="av" id="adv">0</span><div class="acu"></div></div>
+    <div class="qr">
+      <button class="qb" onclick="A.q(500)">+ 500</button>
+      <button class="qb" onclick="A.q(1000)">+ 1 000</button>
+      <button class="qb" onclick="A.q(5000)">+ 5 000</button>
+    </div>
+    <div class="np">
+      <button class="key" onclick="A.p('1')">1</button><button class="key" onclick="A.p('2')">2</button><button class="key" onclick="A.p('3')">3</button>
+      <button class="key" onclick="A.p('4')">4</button><button class="key" onclick="A.p('5')">5</button><button class="key" onclick="A.p('6')">6</button>
+      <button class="key" onclick="A.p('7')">7</button><button class="key" onclick="A.p('8')">8</button><button class="key" onclick="A.p('9')">9</button>
+      <button class="key emp"></button><button class="key" onclick="A.p('0')">0</button>
+      <button class="key del" onclick="A.d()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M21 6H8l-7 6 7 6h13V6zM14.5 9.5l-3 3m0-3l3 3" stroke="#3D4F47" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
+  <div class="s3f"><button class="btn bg" onclick="A.go()">Продолжить</button></div>
+  <div class="sb"></div>
+</div>
+
+<!-- ═══ S4 CONFIRM ═══ -->
+<div class="screen" id="s4">
+  <div class="topbar">
+    <button class="bk" onclick="Nav.to('s3','back')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <span class="tt">Подтвердите оплату</span>
+  </div>
+  <div class="s4card">
+    <div class="s4mr"><div class="mi">☕</div><div><div class="mn">Кофейня «Берег»</div><div class="ms">ул. Садовая, 12</div></div></div>
+    <div class="s4am" id="s4am">₽ 0</div><div class="s4as">Комиссия: 0 ₽</div>
+  </div>
+  <div class="s4cw">
+    <div class="s4fr">
+      <div class="s4c tl"></div><div class="s4c tr"></div><div class="s4c bl"></div><div class="s4c br"></div>
+      <div class="s4sl"></div>
+      <svg width="78" height="98" viewBox="0 0 78 98" fill="none" style="opacity:.18"><path d="M18 94L16 56Q15 48 21 46Q27 44 28 50L29 61 29 32Q29 25 35 25Q41 25 41 32L41 52 41 29Q41 22 47 22Q53 22 53 29L53 52 53 38Q53 31 59 31Q65 31 65 38L65 58 68 52Q71 46 76 49Q81 52 78 60L66 94Z" stroke="rgba(165,214,167,.5)" stroke-width="1.5" fill="rgba(165,214,167,.04)"/></svg>
+    </div>
+    <div class="s4ht">Поднесите ладонь для подтверждения</div>
+  </div>
+  <div class="s4ft"><button class="btn bg" onclick="App.startPay()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Подтвердить ладонью</button></div>
+  <div class="sb"></div>
+</div>
+
+<!-- ═══ S5 SUCCESS ═══ -->
+<div class="screen" id="s5">
+  <div class="s5b">
+    <div class="lr" style="width:100%;margin-bottom:28px"><div class="li"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C9.2 2 7 4.2 7 7v1H5a1 1 0 00-1 1v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9a1 1 0 00-1-1h-2V7c0-2.8-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3v1H9V7c0-1.7 1.3-3 3-3z" fill="white"/></svg></div><span class="lt">Palm Pay</span></div>
+    <div class="src"><svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h2 class="s5h">Оплата выполнена!</h2>
+    <p class="s5su" id="s5who">Средства успешно списаны</p>
+    <div class="rcp">
+      <div class="rr"><span class="rl">Получатель</span><span class="rv">Кофейня «Берег»</span></div>
+      <div class="rr"><span class="rl">Сумма</span><span class="rv big" id="s5amt">₽ 0</span></div>
+      <div class="rr"><span class="rl">Дата и время</span><span class="rv" id="s5time">—</span></div>
+      <div class="rr"><span class="rl">Способ оплаты</span><span class="rv">🤚 Palm Pay</span></div>
+      <div class="rr"><span class="rl">Биометрия</span><span class="rv" id="s5sim" style="color:var(--g)">—</span></div>
+    </div>
+    <div class="s5bt">
+      <button class="btn bp" onclick="Nav.to('s1','back')">На главную</button>
+      <button class="btn bg" style="box-shadow:none" onclick="A.reset();Nav.to('s3','fwd')">Новый платёж</button>
+    </div>
+  </div>
+  <div class="sb"></div>
+</div>
+
+<!-- ═══ S5E ERROR ═══ -->
+<div class="screen" id="s5e">
+  <div class="s5eb">
+    <div class="lr" style="width:100%;margin-bottom:28px"><div class="li"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C9.2 2 7 4.2 7 7v1H5a1 1 0 00-1 1v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9a1 1 0 00-1-1h-2V7c0-2.8-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3v1H9V7c0-1.7 1.3-3 3-3z" fill="white"/></svg></div><span class="lt">Palm Pay</span></div>
+    <div class="erc"><svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.6L2.4 17a2 2 0 001.7 3h15.7a2 2 0 001.7-3L13.7 3.6a2 2 0 00-3.4 0z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h2 class="s5eh" id="s5eh">Ладонь не распознана</h2>
+    <p class="s5es">Совпадение ниже порога безопасности или ладонь не найдена в базе</p>
+    <div class="s5esc" id="s5esc"></div>
+    <div class="tips">
+      <div class="tip"><div class="tipd"></div>Раскройте ладонь, пальцы вперёд и врозь</div>
+      <div class="tip"><div class="tipd"></div>Расстояние 15–25 см от объектива</div>
+      <div class="tip"><div class="tipd"></div>Равномерное освещение без теней</div>
+      <div class="tip"><div class="tipd"></div>Если впервые — сначала зарегистрируйтесь</div>
+    </div>
+      <div class="s5ebt">
+        <button class="btn br2" onclick="Nav.to('s1','back')">Отмена</button>
+        <button class="btn bg" onclick="App.retryScan()">Повторить</button>
+      </div>
+  </div>
+  <div class="sb"></div>
+</div>
+
+<!-- ═══ PROCESSING OVERLAY ═══ -->
+<div id="pov">
+  <div class="pring"></div>
+  <div class="ptxt" id="ptxt">Обработка...</div>
+  <div class="ppct" id="ppct"></div>
+</div>
+
+<!-- ═══ HISTORY SCREEN ═══ -->
+<div class="screen" id="shist">
+  <div class="topbar">
+    <button class="bk" onclick="UI.bnav(0)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <span class="tt">История операций</span>
+    <button id="hist-clear-btn" onclick="UI.clearHistory()" style="display:none;font-size:12px;font-weight:600;color:var(--ts);background:none;border:none;cursor:pointer;padding:4px 8px">Очистить</button>
+  </div>
+  <!-- Stats row -->
+  <div class="hist-stats" id="hist-stats" style="display:none">
+    <div class="hist-stat">
+      <div class="hist-stat-val" id="hist-total-amt">₽ 0</div>
+      <div class="hist-stat-lbl">Всего потрачено</div>
+    </div>
+    <div class="hist-stat">
+      <div class="hist-stat-val" id="hist-total-tx">0</div>
+      <div class="hist-stat-lbl">Транзакций</div>
+    </div>
+  </div>
+  <div class="hist-list" id="hist-list">
+    <div class="hist-empty">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#B0C4B8" stroke-width="1.5"/><path d="M3 10h18M8 15h2m4 0h2" stroke="#B0C4B8" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <p>Транзакций пока нет.<br>Оплатите что-нибудь ладонью.</p>
+    </div>
+  </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="UI.bnav(0)">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke="#B0C4B8" stroke-width="2" stroke-linejoin="round"/><path d="M9 21V12h6v9" stroke="#B0C4B8" stroke-width="2"/></svg>
+      <span>Главная</span>
+    </button>
+    <button class="bnav-btn active" onclick="UI.bnav(1)">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#2E7D32" stroke-width="2"/><path d="M3 10h18M8 15h2m4 0h2" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="color:var(--g)">История</span>
+    </button>
+    <button class="bnav-btn" onclick="UI.bnav(2)">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#B0C4B8" stroke-width="2"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#B0C4B8" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Профили</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ PROFILES SCREEN ═══ -->
+<div class="screen" id="sprof">
+  <div class="topbar">
+    <button class="bk" onclick="UI.bnav(0)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <span class="tt">Профили ладони</span>
+    <button onclick="Nav.to('sreg','fwd')" style="font-size:12px;font-weight:700;color:var(--g);background:var(--gp);border:none;border-radius:10px;padding:6px 12px;cursor:pointer">+ Добавить</button>
+  </div>
+  <div class="prof-list" id="prof-list">
+    <div class="prof-empty">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#B0C4B8" stroke-width="1.5"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#B0C4B8" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <p>Нет зарегистрированных профилей.<br>Нажмите «+ Добавить».</p>
+    </div>
+  </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="UI.bnav(0)">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke="#B0C4B8" stroke-width="2" stroke-linejoin="round"/><path d="M9 21V12h6v9" stroke="#B0C4B8" stroke-width="2"/></svg>
+      <span>Главная</span>
+    </button>
+    <button class="bnav-btn" onclick="UI.bnav(1)">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#B0C4B8" stroke-width="2"/><path d="M3 10h18M8 15h2m4 0h2" stroke="#B0C4B8" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>История</span>
+    </button>
+    <button class="bnav-btn active" onclick="UI.bnav(2)">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#2E7D32" stroke-width="2"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="color:var(--g)">Профили</span>
+    </button>
+  </div>
+</div>
+
+<!-- modal injected dynamically by UI._showModal -->
+
+</div><!-- #shell -->
+</div><!-- #app -->
+
+<!-- Heavy ML libs loaded async — don't block page render -->
+<script>
+
+(function() {
+  // Load scripts sequentially after page is interactive
+  function loadScript(src, cb) {
+    const s = document.createElement('script');
+    s.src = src; s.crossOrigin = 'anonymous';
+    s.onload = () => { cb && cb(null); };
+    s.onerror = (e) => {
+      console.warn('[ML] Failed to load:', src);
+      cb && cb(e); // still continue — app works without ML
+    };
+    document.head.appendChild(s);
+  }
+  window._mlReady = false;
+  window._mlLoading = false;
+  window._mlCallbacks = [];
+  window.loadMLLibs = function(cb) {
+    if (window._mlReady) { cb && cb(); return; }
+    if (cb) window._mlCallbacks.push(cb);
+    if (window._mlLoading) return;
+    window._mlLoading = true;
+    // MediaPipe first (smaller, faster)
+    loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js', () => {
+      // TF.js next
+      loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js', () => {
+        // MobileNet last
+        loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js', () => {
+          window._mlReady = true;
+          window._mlLoading = false;
+          window._mlCallbacks.forEach(fn=>fn()); window._mlCallbacks=[];
+        });
+      });
+    });
+  };
+})();
+
+
+'use strict';
+
+/* ══════════════════════════════════════════════════════════
+   PALMPAY  ·  CORE JS
+   Nav · DB · Bio · Scan · UI · A · App · Init
+══════════════════════════════════════════════════════════ */
+
+/* ── NAVIGATION ─────────────────────────────────────────── */
+const Nav = (() => {
+  let cur = 's1';
+  function to(id, dir) {
+    if (id === cur) return;
+    const f = document.getElementById(cur), n = document.getElementById(id);
+    if (!f || !n) return;
+    n.classList.add('active', dir === 'fwd' ? 'sir' : 'sil');
+    f.classList.add(dir === 'fwd' ? 'sol' : 'sor');
+    setTimeout(() => { f.classList.remove('active','sol','sor'); n.classList.remove('sir','sil'); cur = id; }, 270);
+  }
+  return { to };
+})();
+
+/* ── DATABASE ────────────────────────────────────────────── */
+const DB = {
+  _p: 'pp4', _t: 'pp4_tx',
+  all()   { try { return JSON.parse(localStorage.getItem(this._p) || '[]'); } catch { return []; } },
+  save(d) { try { localStorage.setItem(this._p, JSON.stringify(d)); } catch(e) { console.warn('[DB]', e.message); } },
+  add(name, emb) {
+    const d = this.all(), id = Date.now().toString(36).toUpperCase();
+    // Store calibration threshold per profile (default 0)
+    d.push({ id, name, geo: emb.geo||null, visual: emb.visual||null, threshold: 0, ts: new Date().toISOString() });
+    this.save(d); return id;
+  },
+  update(id, patch) {
+    const d = this.all().map(p => p.id === id ? { ...p, ...patch } : p);
+    this.save(d);
+  },
+  remove(id)  { this.save(this.all().filter(p => p.id !== id)); },
+  count()     { return this.all().length; },
+  txAll()     { try { return JSON.parse(localStorage.getItem(this._t) || '[]'); } catch { return []; } },
+  txSave(t)   { try { localStorage.setItem(this._t, JSON.stringify(t)); } catch(e) { console.warn('[DB TX]', e.message); } },
+  txAdd(merchant, amount, who) {
+    const t = this.txAll();
+    t.unshift({ id: Date.now().toString(36).toUpperCase(), merchant, amount, who, ts: new Date().toISOString() });
+    if (t.length > 200) t.length = 200;
+    this.txSave(t);
+  },
+  txClear()   { localStorage.removeItem(this._t); }
+};
+
+/* ── BIOMETRICS ──────────────────────────────────────────── */
+const Bio = (() => {
+  const BASE_THRESHOLD = 0.94;
+  const W_VIS = 0.65, W_GEO = 0.35;
+  const MIN_MARGIN = 0.05; // Minimum gap between best and second-best match
+  let tfModel = null, _ready = false;
+
+  // Load MobileNetV2
+  async function loadTF() {
+    if (_ready) return true;
+    try {
+      if (!window.tf || !window.mobilenet) return false;
+      tfModel = await mobilenet.load({ version: 2, alpha: 1.0 });
+      _ready = true;
+      console.log('[Bio] MobileNet ready');
+      return true;
+    } catch(e) { console.warn('[Bio] MobileNet failed:', e.message); return false; }
+  }
+
+  // Visual embedding from video frame
+  async function getVisualEmb(videoEl, bbox) {
+    if (!_ready || !tfModel || !window.tf) return null;
+    try {
+      const crop = tf.tidy(() => {
+        let t = tf.browser.fromPixels(videoEl);
+        t = tf.reverse(t, 1); // mirror
+        const [H, W] = t.shape;
+        if (bbox) {
+          const pad = 0.12;
+          const x1 = Math.max(0, Math.round((bbox.x - bbox.w*pad)*W));
+          const y1 = Math.max(0, Math.round((bbox.y - bbox.h*pad)*H));
+          const cw = Math.min(W-x1, Math.round(bbox.w*(1+pad*2)*W));
+          const ch = Math.min(H-y1, Math.round(bbox.h*(1+pad*2)*H));
+          t = tf.slice(t, [y1,x1,0], [Math.max(1,ch),Math.max(1,cw),3]);
+        }
+        return tf.image.resizeBilinear(t,[224,224]).toFloat().div(127.5).sub(1).expandDims(0);
+      });
+      const emb = tfModel.infer(crop, true);
+      const data = Array.from(await emb.data());
+      emb.dispose(); crop.dispose();
+      return l2(data);
+    } catch(e) { return null; }
+  }
+
+  // Geometric embedding from 21 landmarks
+  function geoEmb(lms) {
+    if (!lms || lms.length < 21) return null;
+    const p = lms.map(l => [l.x, l.y, l.z||0]);
+    const sc = d3(p[0],p[9]) || 1;
+    const n = p.map(pt => [(pt[0]-p[0][0])/sc, (pt[1]-p[0][1])/sc, (pt[2]-p[0][2])/sc]);
+    const C = n.flat();
+    const ki = [0,4,5,8,9,12,13,16,17,20,2];
+    const D = [];
+    for (let i=0;i<ki.length;i++) for (let j=i+1;j<ki.length;j++) D.push(d3(n[ki[i]],n[ki[j]]));
+    const AN = [[1,2,3],[2,3,4],[5,6,7],[6,7,8],[9,10,11],[10,11,12],
+                [13,14,15],[14,15,16],[17,18,19],[18,19,20],[0,5,9],[5,9,13]]
+      .map(([a,b,c]) => ang(n[a],n[b],n[c]));
+    const fl = [[1,4],[5,8],[9,12],[13,16],[17,20]].map(([a,b])=>d3(n[a],n[b]));
+    const rf = fl[2]||1;
+    const R = fl.map(v=>v/rf);
+    const pw=d3(n[5],n[17]), ph=d3(n[0],n[9]);
+    return l2([...C,...D,...AN,...R, pw/(ph||1), ph/(pw||1), ang(n[4],n[0],n[8]), d3(n[5],n[17])-d3(n[0],n[9])]);
+  }
+
+  // Median of embedding array — robust to outlier frames
+  function medianEmb(arrs) {
+    const v = arrs.filter(a=>a&&a.length>0);
+    if (!v.length) return null;
+    if (v.length===1) return v[0];
+    const d=v[0].length, r=new Array(d);
+    for(let i=0;i<d;i++){
+      const col=v.map(e=>e[i]).sort((a,b)=>a-b), m=Math.floor(col.length/2);
+      r[i]=col.length%2===0?(col[m-1]+col[m])/2:col[m];
+    }
+    return l2(r);
+  }
+
+  // ══ Threshold calibration ══
+  // After registration we compute self-similarity across sessions.
+  // Calibrated threshold = selfSim * 0.93 — gives tighter but personalised threshold.
+  // Stored per profile, used in identify().
+  function calibrate(sessions) {
+    if (sessions.length < 2) return 0; // not enough data
+    const embs = sessions.filter(s=>s.geo||s.visual);
+    if (embs.length < 2) return 0;
+    let sum = 0, n = 0;
+    for (let i=0; i<embs.length; i++)
+      for (let j=i+1; j<embs.length; j++) {
+        sum += fuseScore(embs[i], embs[j].visual||null, embs[j].geo||null);
+        n++;
+      }
+    const selfSim = n > 0 ? sum/n : 0;
+    // Safety: never go below 0.82 or above 0.95
+    return Math.min(0.95, Math.max(0.82, selfSim * 0.93));
+  }
+
+  // Fused score: weighted visual + geo cosine
+  function fuseScore(profile, curVis, curGeo) {
+    let s=0, w=0;
+    if (profile.visual && curVis && profile.visual.length===curVis.length) { s+=cos(profile.visual,curVis)*W_VIS; w+=W_VIS; }
+    if (profile.geo    && curGeo && profile.geo.length===curGeo.length)    { s+=cos(profile.geo,curGeo)*W_GEO;   w+=W_GEO; }
+    return w>0?s/w:0;
+  }
+
+  // Identify against all stored profiles
+  function identify(curVis, curGeo) {
+    const profiles = DB.all();
+    if (!profiles.length) return { match:null, score:0, name:'' };
+    let best=null, bs=0, bn='', secondBest=0;
+    for (const p of profiles) {
+      const s = fuseScore(p, curVis, curGeo);
+      if (s>bs) { secondBest=bs; bs=s; best=p; bn=p.name; }
+      else if (s>secondBest) { secondBest=s; }
+    }
+    console.log(`[Bio] ${bn}: ${(bs*100).toFixed(1)}% (2nd: ${(secondBest*100).toFixed(1)}%, margin: ${((bs-secondBest)*100).toFixed(1)}%)`);
+    Bio._lastScore=bs; Bio._lastName=bn;
+    // Use calibrated threshold if set, else base threshold
+    const threshold = (best && best.threshold > 0) ? best.threshold : BASE_THRESHOLD;
+    // Margin check: reject if best and second-best are too close
+    const margin = bs - secondBest;
+    if (profiles.length > 1 && margin < MIN_MARGIN) {
+      console.log(`[Bio] Rejected: margin ${(margin*100).toFixed(1)}% < ${(MIN_MARGIN*100).toFixed(0)}% — ambiguous match`);
+      return { match:null, score:bs, name:bn, threshold };
+    }
+    // Cross-channel agreement: visual and geo must agree on the same profile
+    let channelAgree = true;
+    if (profiles.length > 1 && curVis && curGeo) {
+      let bestVisId=null, bvs=0, bestGeoId=null, bgs=0;
+      for (const p of profiles) {
+        if (p.visual && curVis && p.visual.length===curVis.length) {
+          const vs = cos(p.visual, curVis);
+          if (vs > bvs) { bvs=vs; bestVisId=p.id; }
+        }
+        if (p.geo && curGeo && p.geo.length===curGeo.length) {
+          const gs = cos(p.geo, curGeo);
+          if (gs > bgs) { bgs=gs; bestGeoId=p.id; }
+        }
+      }
+      if (bestVisId && bestGeoId && bestVisId !== bestGeoId) {
+        console.log(`[Bio] Rejected: visual→${bestVisId} vs geo→${bestGeoId} — channels disagree`);
+        channelAgree = false;
+      }
+    }
+    if (best && bs>=threshold && channelAgree) return { match:best, score:bs, name:bn, threshold };
+    return { match:null, score:bs, name:bn, threshold: best?.threshold||BASE_THRESHOLD };
+  }
+
+  function d3(a,b){ const v=a.map((x,i)=>x-b[i]); return Math.sqrt(v.reduce((s,x)=>s+x*x,0)); }
+  function ang(a,b,c){
+    const v1=a.map((x,i)=>x-b[i]), v2=c.map((x,i)=>x-b[i]);
+    const dt=v1.reduce((s,x,i)=>s+x*v2[i],0);
+    return Math.acos(Math.min(1,Math.max(-1,dt/((Math.sqrt(v1.reduce((s,x)=>s+x*x,0))||1)*(Math.sqrt(v2.reduce((s,x)=>s+x*x,0))||1)))))/Math.PI;
+  }
+  function l2(v){ const n=Math.sqrt(v.reduce((s,x)=>s+x*x,0))||1; return v.map(x=>x/n); }
+  function cos(a,b){ let d=0,na=0,nb=0; for(let i=0;i<a.length;i++){d+=a[i]*b[i];na+=a[i]*a[i];nb+=b[i]*b[i];} return d/(Math.sqrt(na)*Math.sqrt(nb)||1); }
+
+  return { loadTF, getVisualEmb, geoEmb, medianEmb, calibrate, identify, fuseScore,
+           get ready(){ return _ready; }, _lastScore:0, _lastName:'' };
+})();
+
+/* ── SCAN ENGINE ─────────────────────────────────────────── */
+const Scan = (() => {
+  const P = { INIT:0, WAIT:1, CAP:2, LIVENESS:3, SCAN:4, DONE:5 };
+  let ph=P.INIT, mp=null, mpRdy=false, stream=null, raf=null;
+  let detF=0, lostF=0, scanProg=0, geoEmbs=[], visualEmbs=[];
+  let lastLms=null, lastBbox=null, onDone=null, mode='reg';
+  const DET=5, SPD_R=0.55, SPD_P=3.5;
+
+  // Lighting
+  let lightTimer=null, lightOK=true;
+  // Liveness — randomized challenges to prevent prediction
+  const LV_CH=[
+    {emoji:'☝️',msg:'Согните указательный палец',fn:l=>(l[8].y+l[12].y)/2-l[5].y},
+    {emoji:'🤙',msg:'Согните мизинец',fn:l=>(l[20].y+l[16].y)/2-l[17].y},
+    {emoji:'✊',msg:'Сожмите ладонь в кулак',fn:l=>[4,8,12,16,20].reduce((s,i)=>s+Math.hypot(l[i].x-l[0].x,l[i].y-l[0].y),0)/5},
+    {emoji:'👋',msg:'Помашите ладонью',fn:l=>(l[0].x+l[5].x+l[17].x)/3},
+    {emoji:'👍',msg:'Поднимите большой палец',fn:l=>Math.hypot(l[4].x-l[5].x,l[4].y-l[5].y)}
+  ];
+  const LV={active:false,passed:false,history:[],baseline:null,progress:0,frames:0,THRESH:0.05,NEED:4,ch:null};
+  let scanWaitStart=0; // timer for post-liveness palm re-detection
+  // Multi-angle registration
+  const MA={active:false,session:0,total:3,sessions:[],
+    HINTS:['Держите ладонь прямо','Наклоните влево ~15°','Наклоните вправо ~15°']};
+
+  const $=id=>document.getElementById(id), vid=()=>$('sv'), cvs=()=>$('sc');
+
+  function setPhase(p){
+    ph=p; const z=$('szone'); if(!z)return; z.className='szone';
+    if(p===P.LIVENESS||p===P.SCAN) z.classList.add('d');
+    else if(p===P.CAP) z.classList.add('c');
+    else z.classList.add('w');
+  }
+  function st(msg,col,sub=''){
+    const el=$('spl'); if(!el)return; el.textContent=msg; el.style.color=col||'var(--ts)';
+    const sl=$('ssl'); if(sl) sl.textContent=sub;
+  }
+  function sp(pct,col='#2E7D32'){ const b=$('spb'); if(!b)return; b.style.width=pct+'%'; b.style.background=col; }
+
+  // MODULE: Lighting
+  function analyzeLighting(){
+    try{
+      const v=vid(); if(!v||v.readyState<2)return;
+      const c=document.createElement('canvas'); c.width=32; c.height=24;
+      const ctx=c.getContext('2d'); ctx.drawImage(v,0,0,32,24);
+      const d=ctx.getImageData(0,0,32,24).data;
+      let sum=0,n2=0; for(let i=0;i<d.length;i+=4){sum+=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];n2++;}
+      const avg=sum/n2;
+      let vr=0; for(let i=0;i<d.length;i+=4){const l=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];vr+=(l-avg)**2;} vr/=n2;
+      const ic=$('light-icon'),tx=$('light-text'),ind=$('light-indicator'); if(!ind)return;
+      ind.style.display='flex';
+      if(avg<38){ic.textContent='🔦';tx.textContent='Темно';tx.style.color='#E53935';lightOK=false;}
+      else if(avg>215||vr>2800){ic.textContent='☀️';tx.textContent='Ярко';tx.style.color='#F57C00';lightOK=false;}
+      else{ic.textContent='✓';tx.textContent='Свет OK';tx.style.color='#2E7D32';lightOK=true;}
+    }catch{lightOK=true;}
+  }
+  function startLight(){ stopLight(); analyzeLighting(); lightTimer=setInterval(analyzeLighting,900); }
+  function stopLight(){ if(lightTimer){clearInterval(lightTimer);lightTimer=null;} const ind=$('light-indicator'); if(ind)ind.style.display='none'; }
+
+  // MODULE: Camera distance indicator
+  function camDist(state){
+    const wrap=$('cam-dist'), icon=$('cam-dist-icon'), txt=$('cam-dist-text');
+    if(!wrap||!icon||!txt)return;
+    if(state==='none'){
+      wrap.style.display='none';
+      return;
+    }
+    wrap.style.display='flex';
+    if(state==='far'){
+      icon.textContent='↔️';
+      txt.textContent='Слишком далеко';
+      txt.style.color='#F57C00';
+    }else if(state==='close'){
+      icon.textContent='↔️';
+      txt.textContent='Слишком близко';
+      txt.style.color='#F57C00';
+    }else{
+      icon.textContent='📏';
+      txt.textContent='Дистанция OK';
+      txt.style.color='var(--ts)';
+    }
+  }
+
+  // MODULE: Liveness detection — random challenge each time
+  function lvStart(){
+    const ch=LV_CH[Math.floor(Math.random()*LV_CH.length)];
+    Object.assign(LV,{active:true,passed:false,history:[],baseline:null,progress:0,frames:0,ch});
+    const p=$('liveness-prompt'); if(p)p.style.display='block'; lvUI();
+  }
+  function lvStop(){ LV.active=false; const p=$('liveness-prompt'); if(p)p.style.display='none'; }
+  function lvUI(){
+    const m=$('liveness-msg'),b=$('liveness-bar'),e=$('liveness-emoji');
+    if(m)m.textContent=LV.passed?'✓ Живость подтверждена':(LV.ch?.msg||'Выполните действие');
+    if(e)e.textContent=LV.passed?'✅':(LV.ch?.emoji||'🤚');
+    if(b)b.style.width=LV.progress+'%';
+  }
+  function lvProcess(lms){
+    if(!LV.active||!lms||lms.length<21||!LV.ch)return false;
+    const val=LV.ch.fn(lms);
+    LV.history.push(val);
+    if(LV.history.length<3)return false;
+    if(!LV.baseline&&LV.history.length>=3) LV.baseline=LV.history.slice(0,3).reduce((a,b)=>a+b,0)/3;
+    if(LV.history.length>20)LV.history.shift();
+    const dev=Math.max(...LV.history.slice(-5))-Math.min(...LV.history.slice(-5));
+    if(dev>LV.THRESH){LV.frames++;LV.progress=Math.min(100,LV.frames/LV.NEED*100);lvUI();}
+    if(LV.frames>=LV.NEED&&!LV.passed){
+      LV.passed=true;LV.progress=100;lvUI();
+      if(navigator.vibrate)navigator.vibrate([30,30,60]);
+      setTimeout(lvStop,700);return true;
+    }
+    return LV.passed;
+  }
+
+  // MODULE: Multi-angle registration
+  function maInit(){ MA.session=0;MA.sessions=[];const b=$('multi-angle-bar');if(b)b.style.display='block';maUI(); }
+  function maUI(){
+    const l=$('angle-session-label'),h=$('angle-hint');
+    if(l)l.textContent=`${MA.session+1} из ${MA.total}`;
+    if(h)h.textContent=MA.HINTS[MA.session]||'';
+    for(let i=0;i<MA.total;i++){const d=$(`adot${i}`);if(d)d.style.background=i<MA.session?'#2E7D32':i===MA.session?'#A5D6A7':'var(--bd)';}
+  }
+  function maNext(){
+    MA.sessions.push({geo:Bio.medianEmb(geoEmbs),visual:Bio.medianEmb(visualEmbs)});
+    MA.session++;geoEmbs=[];visualEmbs=[];scanProg=0;
+    if(MA.session>=MA.total){maFinish();return;}
+    setPhase(P.WAIT);detF=0;lostF=0;Object.assign(LV,{passed:false,history:[],baseline:null,progress:0,frames:0});
+    sp(0);maUI();st(`Сессия ${MA.session+1}/${MA.total}`, '#2E7D32', MA.HINTS[MA.session]);
+    const fl=$('sflash');if(fl){fl.style.opacity='.4';setTimeout(()=>fl.style.opacity='0',300);}
+  }
+  function maFinish(){
+    const fused={geo:Bio.medianEmb(MA.sessions.filter(s=>s.geo).map(s=>s.geo)),visual:Bio.medianEmb(MA.sessions.filter(s=>s.visual).map(s=>s.visual))};
+    // ══ CALIBRATION: compute personalised threshold ══
+    fused._calibThreshold = Bio.calibrate(MA.sessions);
+    const bar=$('multi-angle-bar');if(bar)bar.style.display='none';
+    setPhase(P.DONE);clearRaf();vid().classList.remove('rdy');
+    if(typeof onDone==='function')onDone(fused);
+  }
+
+  // MediaPipe init
+  async function initMP(){
+    $('citxt').textContent='Настройка сканера ладони...';
+    try{
+      mp=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${f}`});
+      mp.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.65,minTrackingConfidence:.55});
+      let res=null; mp.onResults(r=>{res=r;});
+      await mp.initialize();mpRdy=true;
+      mp._get=()=>{const r=res;res=null;return r;};
+    }catch(e){console.warn('[Scan] MP fail:',e.message);mpRdy=false;}
+  }
+
+  // TF init
+  async function initTF(){
+    $('citxt').textContent='Подготовка биометрии...';
+    const ok=await Bio.loadTF();
+    $('citxt').textContent=ok?'Система готова':'Система готова';
+  }
+
+  // Camera
+  async function openCam(){
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}}});
+      const v=vid();v.srcObject=stream;await v.play();v.classList.add('rdy');return true;
+    }catch(e){
+      const msgs={NotAllowedError:'Доступ к камере запрещён.\n\nНастройки → Safari → Камера → Разрешить',NotFoundError:'Камера не найдена.',NotReadableError:'Камера занята другим приложением.'};
+      $('cemsg').textContent=msgs[e.name]||'Ошибка: '+e.message;
+      $('ceo').classList.add('show');$('cio').style.display='none';return false;
+    }
+  }
+
+  // Draw skeleton + palm contour
+  function drawSkel(lms,W,H){
+    const c=cvs();c.width=W;c.height=H;
+    const ctx=c.getContext('2d');ctx.clearRect(0,0,W,H);
+    if(!lms)return;
+
+    // ── Compensate for object-fit:cover crop ──
+    const v=vid();
+    const vw=v.videoWidth||W, vh=v.videoHeight||H;
+    const contR=W/H, vidR=vw/vh;
+    let sx=0,sy=0,sw=vw,sh=vh;
+    if(vidR>contR){sw=vh*contR;sx=(vw-sw)/2;} // crop sides
+    else{sh=vw/contR;sy=(vh-sh)/2;} // crop top/bottom
+    const px=l=>({
+      x:(1-((l.x*vw-sx)/sw))*W,
+      y:((l.y*vh-sy)/sh)*H
+    });
+
+    // ── Palm contour: outer edge of hand ──
+    const edge=[4,3,2,1,0,17,18,19,20]; // thumb tip → wrist → pinky tip
+    const tips=[20,16,12,8,4]; // fingertips back
+    ctx.save();
+    ctx.beginPath();
+    let fp=px(lms[edge[0]]);
+    ctx.moveTo(fp.x,fp.y);
+    for(let i=1;i<edge.length;i++){const p=px(lms[edge[i]]);ctx.lineTo(p.x,p.y);}
+    for(let i=0;i<tips.length;i++){const p=px(lms[tips[i]]);ctx.lineTo(p.x,p.y);}
+    ctx.closePath();
+    const pulse=.5+.2*Math.sin(Date.now()/400);
+    ctx.strokeStyle=`rgba(165,214,167,${pulse})`;
+    ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.stroke();
+    ctx.fillStyle='rgba(46,125,50,0.06)';ctx.fill();
+    ctx.shadowColor='rgba(76,175,80,0.4)';ctx.shadowBlur=8;
+    ctx.strokeStyle=`rgba(165,214,167,${pulse*0.4})`;ctx.lineWidth=1;ctx.stroke();
+    ctx.restore();
+
+    // ── Finger connections ──
+    const CONN=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+    const FC=['#FFD54F','#A5D6A7','#81C784','#66BB6A','#4CAF50'];
+    const gc=i=>i<=4?FC[0]:i<=8?FC[1]:i<=12?FC[2]:i<=16?FC[3]:FC[4];
+    ctx.lineWidth=1.5;
+    CONN.forEach(([a,b])=>{
+      const pa=px(lms[a]),pb=px(lms[b]);
+      ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pb.x,pb.y);
+      ctx.strokeStyle=gc(a)+'99';ctx.stroke();
+    });
+    // ── Landmark dots ──
+    lms.forEach((l,i)=>{
+      const{x,y}=px(l);const tip=[4,8,12,16,20].includes(i);
+      ctx.beginPath();ctx.arc(x,y,i===0?5:tip?4:3,0,Math.PI*2);
+      ctx.fillStyle=i===0?'#FFD54F':tip?'#A5D6A7':'#81C784';ctx.fill();
+      if(tip&&ph===P.SCAN){
+        const p2=.4+.3*Math.sin(Date.now()/250+i);
+        ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(165,214,167,${p2})`;ctx.lineWidth=1.5;ctx.stroke();
+      }
+    });
+    // Visual quality indicator
+    if(ph===P.SCAN&&visualEmbs.length>0){
+      const q=Math.min(visualEmbs.length/25,1);
+      ctx.fillStyle='rgba(255,255,255,.15)';ctx.fillRect(W-54,8,44,4);
+      ctx.fillStyle=`rgba(165,214,167,${.5+q*.5})`;ctx.fillRect(W-54,8,44*q,4);
+    }
+  }
+
+  // Render loop
+  function startRender(){
+    function loop(){ if(ph>=P.DONE)return; const c=cvs(),W=c.offsetWidth,H=c.offsetHeight; if(lastLms)drawSkel(lastLms,W,H); else{c.width=W;c.height=H;c.getContext('2d').clearRect(0,0,W,H);} raf=requestAnimationFrame(loop); }
+    raf=requestAnimationFrame(loop);
+  }
+
+  // Detection loop (async)
+  async function detectLoop(){
+    const v=vid();
+    while(ph<P.DONE){
+      if(v.readyState>=2){
+        if(mpRdy){
+          try{
+            await mp.send({image:v});await new Promise(r=>setTimeout(r,8));
+            const res=mp._get();
+            if(res?.multiHandLandmarks?.length){
+              lastLms=res.multiHandLandmarks[0];
+              const xs=lastLms.map(l=>l.x),ys=lastLms.map(l=>l.y);
+              lastBbox={x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)};
+            }else{lastLms=null;lastBbox=null;}
+          }catch{lastLms=null;lastBbox=null;}
+        }else{lastLms=null;lastBbox=null;}
+        // Visual embedding collection
+        if(ph===P.SCAN&&lastLms&&Bio.ready){
+          try{const ve=await Bio.getVisualEmb(v,lastBbox);if(ve)visualEmbs.push(ve);}catch{}
+        }
+      }
+      await new Promise(r=>setTimeout(r,80));
+    }
+  }
+
+  // State machine
+  function tick(){
+    if(ph>=P.DONE)return;
+    const h=!!lastLms;
+
+    if(ph===P.WAIT){
+      if(!lightOK&&!h){st('🔦 Включите свет для сканирования','#E53935','Нужно равномерное освещение');setTimeout(tick,120);return;}
+      if(h){
+        const sz=lastBbox?Math.max(lastBbox.w,lastBbox.h):0.4;
+    if(sz<0.14){
+      st('↔️ Подвиньте ладонь ближе','#F57C00','Слишком далеко');
+      camDist('far');
+      detF=Math.max(0,detF-1);$('shdf').style.width=(detF/DET*100)+'%';setTimeout(tick,80);return;
+    }
+    if(sz>0.92){
+      st('↔️ Отдалите ладонь','#F57C00','Слишком близко');
+      camDist('close');
+      detF=Math.max(0,detF-1);$('shdf').style.width=(detF/DET*100)+'%';setTimeout(tick,80);return;
+    }
+    camDist('ok');
+        detF++;$('shdf').style.width=(detF/DET*100)+'%';
+        st('🤚 Ладонь обнаружена','#2E7D32',`Захват: ${detF}/${DET}`);
+        if(detF>=DET){
+          const fl=$('sflash');if(fl){fl.style.opacity='.7';setTimeout(()=>fl.style.opacity='0',200);}
+          if(navigator.vibrate)navigator.vibrate(70);
+          setPhase(P.LIVENESS);lvStart();lostF=0;geoEmbs=[];visualEmbs=[];scanProg=0;sp(0);
+          st((LV.ch?.emoji||'🤚')+' '+(LV.ch?.msg||'Выполните действие'),'#1565C0','Подтверждение живости');
+        }
+      }else{
+        detF=Math.max(0,detF-1);$('shdf').style.width=(detF/DET*100)+'%';
+        st('Поместите ладонь в рамку','#7A9185',MA.active?MA.HINTS[MA.session]:'Раскройте ладонь, пальцы вперёд');sp(0);
+    camDist('none');
+      }
+
+    }else if(ph===P.LIVENESS){
+      if(!h){lostF++;if(lostF>15){setPhase(P.WAIT);detF=0;lostF=0;lvStop();st('⚠ Ладонь убрана','#E53935','');sp(0);}else st('☝️ Не убирайте ладонь...','#F57C00',`${lostF}/15`);}
+      else{lostF=0;const ok=lvProcess(lastLms);if(ok)setTimeout(()=>{lvStop();scanWaitStart=Date.now();setPhase(P.SCAN);st('🤚 Раскройте ладонь для сканирования','#2E7D32','');},500);else st((LV.ch?.emoji||'🤚')+' '+(LV.ch?.msg||''),'#1565C0',`${Math.round(LV.progress)}%`);}
+
+    }else if(ph===P.SCAN){
+      if(h){
+        lostF=0;scanWaitStart=0;const ge=Bio.geoEmb(lastLms);if(ge)geoEmbs.push(ge);
+        const spd=mode==='reg'?SPD_R:SPD_P;scanProg=Math.min(100,scanProg+spd);sp(scanProg);$('shdf').style.width='100%';
+        const ng=geoEmbs.length,nv=visualEmbs.length,hv=Bio.ready;
+        if(mode==='reg'&&MA.active){
+          const sl=`Сессия ${MA.session+1}/${MA.total}`;
+          if(scanProg<35)st(`${sl} — Захват`,'#2E7D32',`Кадров: ${ng}${hv?` / ${nv}`:''}`);
+          else if(scanProg<70)st(`${sl} — Признаки`,'#1565C0','Обрабатывается...');
+          else st(`${sl} — Завершение`,'#2E7D32','Почти готово...');
+        }else{
+          if(scanProg<25)st('Анализ структуры ладони...','#2E7D32',`Геометрия: ${ng}${hv?`  Визуал: ${nv}`:''}`);
+          else if(scanProg<55)st('Извлечение признаков...','#1565C0',`Кадров: ${ng}${hv?` / ${nv}`:''}`);
+          else if(scanProg<80)st(mode==='reg'?'Формирование профиля...':'Сравнение с базой...','#E65100',`Точность: ${hv?'высокая':'средняя'}`);
+          else st('Финальная верификация...','#2E7D32','🔒 Двойная биометрия');
+        }
+        if(scanProg>=100){if(mode==='reg'&&MA.active)maNext();else{setPhase(P.DONE);complete();}}
+      }else{
+        lostF++;
+        // 5-second timeout if palm not re-opened after liveness
+        if(scanProg===0 && scanWaitStart>0 && Date.now()-scanWaitStart>5000){
+          setPhase(P.WAIT);detF=0;lostF=0;scanProg=0;scanWaitStart=0;geoEmbs=[];visualEmbs=[];$('shdf').style.width='0%';sp(0);
+          st('⏰ Время вышло — начните снова','#E53935','');
+        }else if(lostF>18){
+          setPhase(P.WAIT);detF=0;lostF=0;scanProg=0;scanWaitStart=0;geoEmbs=[];visualEmbs=[];$('shdf').style.width='0%';sp(0);
+          st('⚠ Ладонь убрана — начните снова','#E53935','');
+        }else{
+          st('Не уводите ладонь...','#F57C00',`Потеряно: ${lostF}/18`);
+        }
+      }
+    }
+    setTimeout(tick,80);
+  }
+
+  function complete(){
+    const result={geo:Bio.medianEmb(geoEmbs),visual:Bio.medianEmb(visualEmbs)};
+    clearRaf();vid().classList.remove('rdy');
+    if(typeof onDone==='function')onDone(result);
+  }
+  function clearRaf(){ if(raf){cancelAnimationFrame(raf);raf=null;} }
+
+  async function start(m,cb){
+    mode=m;onDone=cb;ph=P.INIT;detF=0;lostF=0;scanProg=0;geoEmbs=[];visualEmbs=[];lastLms=null;lastBbox=null;lightOK=true;
+    Object.assign(LV,{active:false,passed:false,history:[],baseline:null,progress:0,frames:0,ch:null});
+    sp(0);$('shdf').style.width='0%';$('cio').style.display='';$('ceo').classList.remove('show');
+    const lp=$('liveness-prompt');if(lp)lp.style.display='none';
+    vid().classList.remove('rdy');cvs().getContext('2d').clearRect(0,0,cvs().width,cvs().height);
+    setPhase(P.WAIT);st('Подготовка...','var(--ts)','');
+    if(m==='reg'){MA.active=true;maInit();}else{MA.active=false;const b=$('multi-angle-bar');if(b)b.style.display='none';}
+    $('citxt').textContent='Подготовка системы...';
+    await new Promise(resolve=>window.loadMLLibs(resolve));
+    await Promise.all([initMP(),initTF(),openCam()]);
+    if(!stream)return;
+    $('cio').style.display='none';setPhase(P.WAIT);
+    st('Поместите ладонь в рамку','#7A9185',m==='reg'?MA.HINTS[0]:'Раскройте ладонь, пальцы вперёд');
+    startLight();startRender();detectLoop();tick();
+  }
+
+  function stop(){ ph=P.DONE;clearRaf();stopLight();lvStop();if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}vid().srcObject=null;cvs().getContext('2d').clearRect(0,0,cvs().width,cvs().height);const b=$('multi-angle-bar');if(b)b.style.display='none'; }
+  function retry(){ $('ceo').classList.remove('show');start(mode,onDone); }
+
+  return { start, stop, retry };
+})();
+
+/* ── UI  (nav, history, profiles) ───────────────────────── */
+const UI = {
+  _del: null,
+
+  bnav(tab) {
+    const screens=['s1','shist','sprof'];
+    Nav.to(screens[tab], tab===0?'back':'fwd');
+    if(tab===1)this.renderHistory();
+    if(tab===2)this.renderProfiles();
+    this.badge();
+  },
+
+  badge() {
+    const n=DB.count(),b=document.getElementById('s1-prof-badge');if(!b)return;
+    if(n>0){b.style.display='inline-block';b.textContent='👤 '+n+(n===1?' профиль':n<5?' профиля':' профилей');}else b.style.display='none';
+    // Swap home screen: show pay button when users exist
+    const reg=document.getElementById('s1-btn-reg'),pay=document.getElementById('s1-btn-pay');
+    if(reg&&pay){
+      if(n>0){pay.style.display='';reg.className='btn bp';reg.style.marginTop='8px';}
+      else{pay.style.display='none';reg.className='btn bg';reg.style.marginTop='';}
+    }
+  },
+
+  renderHistory() {
+    const txs=DB.txAll(),list=document.getElementById('hist-list'),stats=document.getElementById('hist-stats'),cb=document.getElementById('hist-clear-btn');if(!list)return;
+    const empty='<div class="hist-empty"><svg width="52" height="52" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#B0C4B8" stroke-width="1.5"/><path d="M3 10h18M8 15h2m4 0h2" stroke="#B0C4B8" stroke-width="1.5" stroke-linecap="round"/></svg><p>Транзакций пока нет.<br>Оплатите что-нибудь ладонью.</p></div>';
+    if(!txs.length){list.innerHTML=empty;if(stats)stats.style.display='none';if(cb)cb.style.display='none';return;}
+    if(stats){stats.style.display='grid';document.getElementById('hist-total-amt').textContent='₽ '+txs.reduce((s,t)=>s+t.amount,0).toLocaleString('ru-RU');document.getElementById('hist-total-tx').textContent=txs.length;}
+    if(cb)cb.style.display='block';
+    const ICONS={'Кофейня «Берег»':'☕','Продуктовый':'🛒','Транспорт':'🚇','Ресторан':'🍕','Аптека':'💊'};
+    list.innerHTML=txs.map((tx,i)=>{
+      const ic=ICONS[tx.merchant]||'🤚',d=new Date(tx.ts);
+      const dt=d.toLocaleDateString('ru-RU',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+      return `<div class="tx-card" style="animation-delay:${i*25}ms"><div class="tx-icon">${ic}</div><div class="tx-info"><div class="tx-name">${tx.merchant}</div><div class="tx-meta">${dt} · ${tx.who}</div></div><div class="tx-amount">₽ ${tx.amount.toLocaleString('ru-RU')}</div></div>`;
+    }).join('');
+  },
+
+  clearHistory() {
+    this._showModal('Очистить историю?',`Все ${DB.txAll().length} транзакций будут удалены.`,'Очистить','var(--red)',()=>{DB.txClear();this.renderHistory();});
+  },
+
+  renderProfiles() {
+    const profs=DB.all(),list=document.getElementById('prof-list');if(!list)return;
+    const empty='<div class="prof-empty"><svg width="52" height="52" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#B0C4B8" stroke-width="1.5"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#B0C4B8" stroke-width="1.5" stroke-linecap="round"/></svg><p>Нет профилей.<br>Нажмите «+ Добавить».</p></div>';
+    if(!profs.length){list.innerHTML=empty;return;}
+    list.innerHTML=profs.map((p,i)=>{
+      const init=p.name.charAt(0).toUpperCase();
+      const dt=new Date(p.ts).toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'});
+      const eng=p.visual&&p.visual.length>0?'🔒 Двойная биометрия':p.geo&&p.geo.length>0?'🔐 Биометрия':'Нет данных';
+      const thr=p.threshold>0?`Порог: ${(p.threshold*100).toFixed(0)}%`:'Стандартный порог';
+      return `<div class="prof-card" style="animation:fi .2s ease ${i*35}ms both"><div class="prof-avatar">${init}</div><div class="prof-info"><div class="prof-name">${p.name}</div><div class="prof-meta">${dt}</div><div class="prof-badge">🧠 ${eng} · ${thr}</div></div><div class="prof-del" onclick="UI.askDel('${p.id}','${p.name.replace(/'/g,"\\'")}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#E53935" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`;
+    }).join('');
+  },
+
+  askDel(id,name){
+    this._del=id;
+    this._showModal(`Удалить «${name}»?`,'Биометрические данные удалятся безвозвратно.','Удалить','var(--red)',()=>{
+      DB.remove(this._del);this._del=null;this.renderProfiles();this.badge();
+      this._toast('✓ Профиль удалён');
+    });
+  },
+
+  _showModal(title, sub, btnTxt, btnColor, onOk) {
+    const existing=document.getElementById('_modal');if(existing)existing.remove();
+    const m=document.createElement('div');m.id='_modal';m.className='modal-bg';
+    m.innerHTML=`<div class="modal-box"><div class="modal-title">${title}</div><div class="modal-sub">${sub}</div><div class="modal-btns"><button class="btn" style="background:${btnColor};color:#fff;box-shadow:none" id="_modal-ok">${btnTxt}</button><button class="btn bp" id="_modal-cancel">Отмена</button></div></div>`;
+    m.onclick=e=>{if(e.target===m)m.remove();};
+    document.getElementById('shell').appendChild(m);
+    document.getElementById('_modal-ok').onclick=()=>{m.remove();onOk();};
+    document.getElementById('_modal-cancel').onclick=()=>m.remove();
+  },
+
+  _toast(msg){
+    const t=document.createElement('div');
+    t.style.cssText='position:absolute;bottom:calc(80px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#1A2520;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:999;white-space:nowrap;animation:fi .25s ease both;pointer-events:none;';
+    t.textContent=msg;document.getElementById('shell').appendChild(t);setTimeout(()=>t.remove(),2200);
+  }
+};
+
+/* ── AMOUNT INPUT ─────────────────────────────────────────── */
+const A = (() => {
+  let s='0', v=0;
+  function upd(){ v=parseInt(s)||0; const el=document.getElementById('adv'); if(el)el.textContent=v.toLocaleString('ru-RU'); }
+  return {
+    p(d){ if(s==='0')s=d; else if(s.length<7)s+=d; upd(); },
+    d(){ s=s.length<=1?'0':s.slice(0,-1); upd(); },
+    q(n){ s=String((parseInt(s)||0)+n); upd(); },
+    go(){
+      if(v<=0){ const el=document.getElementById('adv'); if(el){el.style.color='var(--red)';setTimeout(()=>el.style.color='',700);} return; }
+      const am=document.getElementById('s4am'); if(am)am.textContent='₽ '+v.toLocaleString('ru-RU');
+      Nav.to('s4','fwd');
+    },
+    reset(){ s='0'; v=0; const el=document.getElementById('adv'); if(el)el.textContent='0'; },
+    get val(){ return v; }
+  };
+})();
+
+/* ── APP FLOWS ───────────────────────────────────────────── */
+const App = {
+  _lastFlow: null,
+  startReg() {
+    const name=document.getElementById('regname').value.trim();
+    if(!name){const el=document.getElementById('regname');el.style.borderColor='var(--red)';el.focus();setTimeout(()=>el.style.borderColor='',1400);return;}
+    document.getElementById('scantitle').textContent='Регистрация ладони';
+    document.getElementById('scanbk').onclick=()=>{Scan.stop();Nav.to('sreg','back');};
+    Nav.to('sscan','fwd');
+    setTimeout(()=>{
+      Scan.start('reg',result=>{
+        Scan.stop();
+        if(!(result?.geo?.length||result?.visual?.length)){alert('Не удалось получить биометрию.\nПопробуйте в хорошем освещении.');Nav.to('sreg','back');return;}
+        const id=DB.add(name,result);
+        // ══ Save calibrated threshold ══
+        if(result._calibThreshold>0){
+          DB.update(id,{threshold:result._calibThreshold});
+          console.log(`[App] Calibrated threshold for ${name}: ${(result._calibThreshold*100).toFixed(1)}%`);
+        }
+        UI.badge();
+        const shell=document.getElementById('shell')||document.body;
+        const t=document.createElement('div');
+        t.style.cssText='position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#2E7D32;color:#fff;padding:12px 24px;border-radius:28px;font-size:14px;font-weight:600;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(46,125,50,.35);animation:fi .25s ease both;';
+        t.textContent=`✅ ${name} успешно зарегистрирован`;
+        shell.appendChild(t);setTimeout(()=>{t.remove();Nav.to('s1','back');},2500);
+      });
+    },320);
+  },
+
+  startPay() {
+    App._lastFlow = 'pay';
+    if(DB.count()===0){alert('Сначала зарегистрируйте ладонь.\n\nНажмите «← Назад» → «Подключить Palm Pay».');return;}
+    document.getElementById('scantitle').textContent='Подтверждение оплаты';
+    document.getElementById('scanbk').onclick=()=>{Scan.stop();Nav.to('s4','back');};
+    Nav.to('sscan','fwd');
+    setTimeout(()=>{
+      Scan.start('pay',result=>{
+        Scan.stop();
+        if(!(result?.geo?.length||result?.visual?.length)){document.getElementById('s5esc').textContent='Биометрия не получена';Nav.to('s5e','fwd');return;}
+        const ov=document.getElementById('pov'),tx=document.getElementById('ptxt'),pc=document.getElementById('ppct');
+        ov.classList.add('show');let p=0;
+        const steps=[{at:0,t:'Анализ ладони...'},{at:30,t:'Сравнение биометрии...'},{at:65,t:'Верификация...'},{at:90,t:'Готово...'}];
+        const tm=setInterval(()=>{
+          p=Math.min(100,p+4);pc.textContent=Math.round(p)+'%';
+          for(let i=steps.length-1;i>=0;i--){if(p>=steps[i].at){tx.textContent=steps[i].t;break;}}
+          if(p>=100){
+            clearInterval(tm);ov.classList.remove('show');
+            const res=Bio.identify(result.visual,result.geo);
+            if(res.match){
+              const amt=A.val,now=new Date();
+              DB.txAdd('Кофейня «Берег»',amt,res.match.name);
+              document.getElementById('s5amt').textContent='₽ '+amt.toLocaleString('ru-RU');
+              document.getElementById('s5time').textContent=now.toLocaleDateString('ru-RU',{day:'2-digit',month:'long'})+', '+now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+              document.getElementById('s5who').textContent='Идентифицирован: '+res.match.name;
+              document.getElementById('s5sim').textContent=`${(res.score*100).toFixed(1)}%  (порог ${(res.threshold*100).toFixed(0)}%)`;
+              Nav.to('s5','fwd');
+            }else{
+              document.getElementById('s5esc').textContent=`Совпадение ${(res.score*100).toFixed(1)}%  ·  порог ${(res.threshold*100).toFixed(0)}%`;
+              Nav.to('s5e','fwd');
+            }
+          }
+        },22);
+      });
+    },320);
+  },
+
+  // Scan-first payment: scan palm first, then enter amount if recognized
+  quickPay() {
+    App._lastFlow = 'quick';
+    if(DB.count()===0){alert('Сначала зарегистрируйте ладонь.');return;}
+    document.getElementById('scantitle').textContent='Идентификация';
+    document.getElementById('scanbk').onclick=()=>{Scan.stop();Nav.to('s1','back');};
+    Nav.to('sscan','fwd');
+    setTimeout(()=>{
+      Scan.start('pay',result=>{
+        Scan.stop();
+        if(!(result?.geo?.length||result?.visual?.length)){
+          document.getElementById('s5esc').textContent='Биометрия не получена';
+          Nav.to('s5e','fwd');return;
+        }
+        const ov=document.getElementById('pov'),tx=document.getElementById('ptxt'),pc=document.getElementById('ppct');
+        ov.classList.add('show');let p=0;
+        const steps=[{at:0,t:'Анализ ладони...'},{at:35,t:'Сравнение биометрии...'},{at:65,t:'Подтверждение личности...'},{at:90,t:'Готово...'}];
+        const tm=setInterval(()=>{
+          p=Math.min(100,p+3);pc.textContent=Math.round(p)+'%';
+          for(let i=steps.length-1;i>=0;i--){if(p>=steps[i].at){tx.textContent=steps[i].t;break;}}
+          if(p>=100){
+            clearInterval(tm);ov.classList.remove('show');
+            const res=Bio.identify(result.visual,result.geo);
+            if(res.match){
+              // Save recognized user, go to amount entry
+              App._identifiedUser=res.match;
+              App._identifiedScore=res.score;
+              App._identifiedThreshold=res.threshold;
+              UI._toast('✅ '+res.match.name+' — добро пожаловать!');
+              Nav.to('s3','fwd');
+            }else{
+              document.getElementById('s5eh').textContent='Пользователь не найден';
+              document.getElementById('s5esc').textContent=`Совпадение: ${(res.score*100).toFixed(1)}% · Порог: ${(res.threshold*100).toFixed(0)}%`;
+              Nav.to('s5e','fwd');
+            }
+          }
+        },20);
+      });
+    },320);
+  },
+  _identifiedUser: null,
+  _identifiedScore: 0,
+  _identifiedThreshold: 0,
+  retryScan() {
+    // Повторный запуск идентификации в зависимости от последнего сценария
+    if (App._lastFlow === 'quick') {
+      App.quickPay();
+    } else {
+      App.startPay();
+    }
+  }
+};
+
+/* ── INIT ────────────────────────────────────────────────── */
+
+(function init(){
+  function show(){
+    try{
+      document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.removeProperty('display');});
+      const h=document.getElementById('s1');if(h){h.classList.add('active');}
+      UI.badge();
+    }catch(e){console.error('[Init]',e);}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',show);
+  else show();
+  window.addEventListener('load',()=>{show();UI.badge();});
+})();
+document.addEventListener('contextmenu',e=>e.preventDefault());
+
+
+
+// Manifest and final init
+(function(){
+  try {
+    const mf = {"name":"PalmPay","short_name":"PalmPay","display":"standalone","orientation":"portrait","background_color":"#ffffff","theme_color":"#2E7D32","start_url":"./palmpay.html"};
+    const b = new Blob([JSON.stringify(mf)],{type:'application/manifest+json'});
+    const el = document.getElementById('mf-link');
+    if(el) el.href = URL.createObjectURL(b);
+  } catch(e){}
+})();
+
+</script>
+</body>
+</html>
