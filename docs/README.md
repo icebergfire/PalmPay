@@ -1,93 +1,60 @@
-# PalmPay — Биометрический платёжный терминал
+# PalmPay
 
-Система оплаты по ладони через камеру смартфона.  
-Биометрическая идентификация без карты, телефона и PIN-кода.
+PalmPay теперь работает как mobile-first система пассивного распознавания ладони через камеру смартфона. Пользователь не выполняет liveness-жесты и не проходит отдельное "сканирование": приложение анализирует видеопоток, само оценивает качество кадров, само выбирает лучшие фреймы и затем выполняет matching.
 
----
+## Что реально есть в текущем коде
+
+- Непрерывный video stream через `getUserMedia`.
+- Continuous hand detection и tracking на MediaPipe Hands.
+- Passive liveness без команд пользователю.
+- Quality scoring по резкости, освещению, положению ладони, фронтальности и glare.
+- Auto frame selection и auto-capture лучших кадров.
+- 3-канальная биометрия:
+  - `visual` через MobileNetV2,
+  - `texture` по palm lines / edge / skin texture heuristics,
+  - `geo` по landmarks.
+- Multi-stage matching: coarse shortlist по геометрии + fused score.
+- PWA runtime: `manifest.json` + `sw.js`.
 
 ## Структура проекта
 
-```
-PalmPay_Pro/
-│
-├── mobile/                         ← Мобильное приложение (iOS + Android)
-│   ├── palmpay.html                ← Всё приложение в одном файле (PWA)
-│   ├── sw.js                       ← Service Worker (офлайн-режим)
-│   └── manifest.json               ← PWA манифест (иконка, название)
-│
-├── desktop/                        ← Десктопное приложение (Python/PyQt5)
-│   ├── main.py                     ← Точка входа
-│   ├── requirements.txt            ← Зависимости
-│   ├── run_windows.bat             ← Запуск Windows
-│   ├── run_macos.sh                ← Запуск macOS
-│   ├── run_linux.sh                ← Запуск Linux
-│   ├── ui/                         ← Интерфейс
-│   │   ├── main_window.py          ← Главное окно, навигация
-│   │   ├── home_screen.py          ← Главный экран
-│   │   ├── scan_screen.py          ← Сканирование ладони (камера)
-│   │   ├── register_screen.py      ← Регистрация клиента
-│   │   ├── payment_screen.py       ← Экран оплаты
-│   │   ├── balance_screen.py       ← Проверка баланса
-│   │   ├── history_screen.py       ← История транзакций
-│   │   └── admin_screen.py         ← Панель администратора
-│   └── backend/                    ← Бизнес-логика
-│       ├── camera.py               ← Управление камерой (OpenCV)
-│       ├── recognition.py          ← Распознавание ладони (MediaPipe)
-│       ├── embedding.py            ← Биометрические эмбеддинги
-│       ├── liveness.py             ← Защита от спуфинга
-│       ├── database.py             ← База данных (JSON)
-│       └── payments.py             ← Обработка платежей
-│
+```text
+PalmPay/
+├── mobile/
+│   ├── palmpay.html      # основной UI, CV pipeline и matching
+│   ├── manifest.json     # PWA manifest
+│   └── sw.js             # service worker и offline cache
 └── docs/
-    ├── README.md                   ← Этот файл
-    ├── TECH.md                     ← Техническая документация
-    └── INSTALL.md                  ← Инструкция установки
+    ├── README.md         # обзор
+    ├── TECH.md           # архитектура и pipeline
+    ├── INSTALL.md        # запуск и деплой
+    ├── AUDIT.md          # аудит и remove/replace matrix
+    └── ROADMAP.md        # план развития
 ```
-
----
 
 ## Технологический стек
 
-### Мобильная версия
-| Компонент | Технология |
-|-----------|-----------|
-| Интерфейс | HTML5 + CSS3 (fluid, adaptive) |
-| Биометрия | MediaPipe Hands + TensorFlow.js MobileNetV2 |
-| Хранилище | localStorage (на устройстве) |
-| Офлайн | Service Worker + Cache API |
-| Установка | PWA (добавить на экран Домой) |
+| Область | Технология |
+|--------|------------|
+| UI | HTML5, CSS3, vanilla JavaScript |
+| Hand tracking | MediaPipe Hands |
+| Visual embedding | TensorFlow.js + MobileNetV2 |
+| Texture features | lightweight canvas-based edge / line / texture extraction |
+| Storage | `localStorage` |
+| Runtime APIs | Camera, Vibration, Service Worker |
+| Packaging | PWA |
 
-### Десктопная версия
-| Компонент | Технология |
-|-----------|-----------|
-| Интерфейс | PyQt5 |
-| Камера | OpenCV |
-| Биометрия | MediaPipe Hands + NumPy |
-| Хранилище | JSON-файлы |
-| Платформы | Windows, macOS, Linux |
+## Ограничения текущей версии
 
----
+- Это по-прежнему browser-only клиент без нативного Secure Enclave / Keychain / Keystore.
+- Профили и история транзакций живут локально в браузере на одном устройстве.
+- Matching рассчитан на небольшой on-device профильный набор; полноценный vector index уровня FAISS/HNSW пока не внедрён.
+- Passive anti-spoofing основан на RGB-эвристиках и не равен нативному fintech-grade сенсору.
+- ML-библиотеки грузятся с CDN при старте, поэтому первая загрузка требует сеть.
 
-## Биометрический движок
+## Карта документации
 
-**Двойная система:**
-1. **TensorFlow.js MobileNetV2** — 1280-мерный визуальный вектор (65% веса)
-2. **MediaPipe Hands** — 137-мерный геометрический вектор (35% веса)
-
-**Защита:**
-- Liveness detection — обнаружение живой руки (движение пальца)
-- Multi-angle регистрация — 3 ракурса для устойчивого профиля
-- Калибровка порога — индивидуальный порог для каждого пользователя
-- Анализ освещения — предупреждение при плохих условиях съёмки
-- Проверка расстояния — контроль дистанции до камеры
-
-**Точность:**
-- FAR (чужой проходит): ~5%
-- FRR (свой не проходит): ~8%
-- Порог по умолчанию: 88% (калибруется индивидуально)
-
----
-
-## Лицензия
-
-Коммерческая лицензия. Все права защищены.
+- [`TECH.md`](TECH.md): обновлённая архитектура passive pipeline, feature extraction, liveness, matching, security status.
+- [`INSTALL.md`](INSTALL.md): запуск локально, PWA deployment, mobile usage и проверка pipeline.
+- [`AUDIT.md`](AUDIT.md): проблемы, что удалено/заменено и как безопасно интегрировать дальнейшие изменения.
+- [`ROADMAP.md`](ROADMAP.md): быстрые, средние и продвинутые этапы развития.

@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="PalmPay">
 <meta name="theme-color" content="#ffffff">
 <title>PalmPay</title>
-<link rel="manifest" id="mf-link">
+<link rel="manifest" id="mf-link" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 /* ─── BASE ─── */
@@ -17,7 +17,6 @@
   --g:#2E7D32;--gl:#A5D6A7;--gp:#E8F5E9;--gb:#F4FAF4;
   --td:#1A2520;--ts:#7A9185;--tm:#B0C4B8;--bd:#E0EDE0;
   --red:#E53935;--rp:#FFEBEE;
-  --st:env(safe-area-inset-top,0px);
   --sb:env(safe-area-inset-bottom,0px);
   /* Fluid spacing — scales with viewport */
   --sp-xs: clamp(6px,  1.2vw,  10px);
@@ -373,7 +372,7 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
   flex:1;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:3px;
   padding:10px 4px;border:none;background:transparent;
-  cursor:pointer;-webkit-appearance:none;font-family:-apple-system,'DM Sans',sans-serif;touch-action:manipulation}
+  cursor:pointer;-webkit-appearance:none;appearance:none;font-family:-apple-system,'DM Sans',sans-serif;touch-action:manipulation}
 .bnav-btn svg{width:22px;height:22px;transition:transform .15s}
 .bnav-btn span{font-size:10px;font-weight:600;color:var(--tm);letter-spacing:.3px}
 .bnav-btn.active svg{transform:scale(1.1)}
@@ -516,7 +515,7 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
     </button>
     <div class="s1sc">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="#B0C4B8"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4z"/></svg>
-      <span>Данные защищены шифрованием</span>
+      <span>Биометрия обрабатывается локально на устройстве</span>
     </div>
   </div>
   <!-- Bottom nav -->
@@ -550,14 +549,14 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
     <div class="snote">🤚 Мы запишем уникальные биометрические признаки вашей ладони. Данные хранятся только на вашем устройстве.</div>
     <div class="ssteps">
       <div class="sstep"><div class="snum">1</div>Введите своё имя</div>
-      <div class="sstep"><div class="snum">2</div>Поднесите ладонь прямо → проверка живости</div>
-      <div class="sstep"><div class="snum">3</div>Ладонь немного влево → снова проверка</div>
-      <div class="sstep"><div class="snum">4</div>Ладонь немного вправо → готово</div>
+      <div class="sstep"><div class="snum">2</div>Держите руку естественно в зоне камеры</div>
+      <div class="sstep"><div class="snum">3</div>Система сама проверит живость и выберет лучшие кадры</div>
+      <div class="sstep"><div class="snum">4</div>Профиль сохранится автоматически</div>
     </div>
     <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
       <button class="btn bg" onclick="App.startReg()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M23 7l-7 5 7 5V7z" fill="white"/><rect x="1" y="5" width="15" height="14" rx="2" stroke="white" stroke-width="2" fill="none"/></svg>
-        Начать сканирование
+        Начать регистрацию
       </button>
       <button class="btn bp" onclick="Nav.to('s3','fwd')">Уже зарегистрирован — Оплатить</button>
     </div>
@@ -569,7 +568,7 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
 <div class="screen" id="sscan">
   <div class="topbar">
     <button class="bk" id="scanbk" onclick="Scan.stop();Nav.to('sreg','back')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <span class="tt" id="scantitle">Сканирование ладони</span>
+    <span class="tt" id="scantitle">Пассивное распознавание</span>
     <!-- Lighting indicator -->
     <div id="light-indicator" style="display:none;align-items:center;gap:5px;flex-shrink:0">
       <div id="light-icon" style="font-size:14px">💡</div>
@@ -579,20 +578,6 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
       <span id="cam-dist-icon">📏</span>
       <span id="cam-dist-text">Дистанция OK</span>
     </div>
-  </div>
-
-  <!-- Multi-angle progress bar (registration only) -->
-  <div id="multi-angle-bar" style="display:none;padding:8px 16px 0;background:#fff;flex-shrink:0">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:11px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.7px">Сессия регистрации</span>
-      <span id="angle-session-label" style="font-size:11px;font-weight:700;color:var(--g)">1 из 3</span>
-    </div>
-    <div style="display:flex;gap:6px">
-      <div class="angle-dot" id="adot0" style="flex:1;height:4px;background:var(--bd);border-radius:2px;transition:background .3s"></div>
-      <div class="angle-dot" id="adot1" style="flex:1;height:4px;background:var(--bd);border-radius:2px;transition:background .3s"></div>
-      <div class="angle-dot" id="adot2" style="flex:1;height:4px;background:var(--bd);border-radius:2px;transition:background .3s"></div>
-    </div>
-    <div id="angle-hint" style="font-size:11px;color:var(--ts);text-align:center;margin-top:5px">Держите ладонь прямо</div>
   </div>
 
   <div class="scw">
@@ -617,8 +602,8 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
     <!-- Liveness prompt overlay -->
     <div id="liveness-prompt" class="lvp">
       <div class="lvp-box" style="animation:fi .3s ease both">
-        <div id="liveness-emoji" style="font-size:28px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;width:100%">☝️</div>
-        <div id="liveness-msg" style="color:#fff;font-size:13px;font-weight:600;white-space:nowrap;text-align:center;width:100%">Согните указательный палец</div>
+        <div id="liveness-emoji" style="font-size:28px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;width:100%">🛡️</div>
+        <div id="liveness-msg" style="color:#fff;font-size:13px;font-weight:600;white-space:nowrap;text-align:center;width:100%">Пассивная проверка живости</div>
         <div style="margin-top:8px;height:3px;background:rgba(165,214,167,.2);border-radius:2px;overflow:hidden;width:100%">
           <div id="liveness-bar" style="height:100%;width:0%;background:#A5D6A7;border-radius:2px;transition:width .15s ease"></div>
         </div>
@@ -686,9 +671,9 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
       <div class="s4sl"></div>
       <svg width="78" height="98" viewBox="0 0 78 98" fill="none" style="opacity:.18"><path d="M18 94L16 56Q15 48 21 46Q27 44 28 50L29 61 29 32Q29 25 35 25Q41 25 41 32L41 52 41 29Q41 22 47 22Q53 22 53 29L53 52 53 38Q53 31 59 31Q65 31 65 38L65 58 68 52Q71 46 76 49Q81 52 78 60L66 94Z" stroke="rgba(165,214,167,.5)" stroke-width="1.5" fill="rgba(165,214,167,.04)"/></svg>
     </div>
-    <div class="s4ht">Поднесите ладонь для подтверждения</div>
+    <div class="s4ht" id="s4hint">Держите руку естественно в зоне камеры</div>
   </div>
-  <div class="s4ft"><button class="btn bg" onclick="App.startPay()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Подтвердить ладонью</button></div>
+  <div class="s4ft"><button class="btn bg" id="pay-confirm-btn" onclick="App.startPay()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Подтвердить ладонью</button></div>
   <div class="sb"></div>
 </div>
 
@@ -723,10 +708,10 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
     <p class="s5es">Совпадение ниже порога безопасности или ладонь не найдена в базе</p>
     <div class="s5esc" id="s5esc"></div>
     <div class="tips">
-      <div class="tip"><div class="tipd"></div>Раскройте ладонь, пальцы вперёд и врозь</div>
-      <div class="tip"><div class="tipd"></div>Расстояние 15–25 см от объектива</div>
-      <div class="tip"><div class="tipd"></div>Равномерное освещение без теней</div>
-      <div class="tip"><div class="tipd"></div>Если впервые — сначала зарегистрируйтесь</div>
+      <div class="tip"><div class="tipd"></div>Держите кисть открытой и естественной</div>
+      <div class="tip"><div class="tipd"></div>Оставайтесь в зоне 15–30 см от объектива</div>
+      <div class="tip"><div class="tipd"></div>Избегайте резких теней и бликов</div>
+      <div class="tip"><div class="tipd"></div>Если это первая оплата — сначала создайте профиль</div>
     </div>
       <div class="s5ebt">
         <button class="btn br2" onclick="Nav.to('s1','back')">Отмена</button>
@@ -880,12 +865,32 @@ const Nav = (() => {
 /* ── DATABASE ────────────────────────────────────────────── */
 const DB = {
   _p: 'pp4', _t: 'pp4_tx',
-  all()   { try { return JSON.parse(localStorage.getItem(this._p) || '[]'); } catch { return []; } },
+  all()   {
+    try {
+      const arr = JSON.parse(localStorage.getItem(this._p) || '[]');
+      // Migrate legacy profiles with inflated thresholds
+      let dirty = false;
+      for (const p of arr) {
+        if (p.threshold > 0.84) { p.threshold = 0.84; dirty = true; }
+      }
+      if (dirty) this.save(arr);
+      return arr;
+    } catch { return []; }
+  },
   save(d) { try { localStorage.setItem(this._p, JSON.stringify(d)); } catch(e) { console.warn('[DB]', e.message); } },
   add(name, emb) {
     const d = this.all(), id = Date.now().toString(36).toUpperCase();
     // Store calibration threshold per profile (default 0)
-    d.push({ id, name, geo: emb.geo||null, visual: emb.visual||null, threshold: 0, ts: new Date().toISOString() });
+    d.push({
+      id,
+      token: window.crypto?.randomUUID ? window.crypto.randomUUID() : `pp_${id}`,
+      name,
+      geo: emb.geo||null,
+      visual: emb.visual||null,
+      texture: emb.texture||null,
+      threshold: 0,
+      ts: new Date().toISOString()
+    });
     this.save(d); return id;
   },
   update(id, patch) {
@@ -907,24 +912,124 @@ const DB = {
 
 /* ── BIOMETRICS ──────────────────────────────────────────── */
 const Bio = (() => {
-  const BASE_THRESHOLD = 0.94;
-  const W_VIS = 0.65, W_GEO = 0.35;
-  const MIN_MARGIN = 0.05; // Minimum gap between best and second-best match
+  const BASE_THRESHOLD = 0.72;
+  const W_VIS = 0.40, W_TEX = 0.35, W_GEO = 0.25;
+  const MIN_MARGIN = 0.025;
+  const SHORTLIST_SIZE = 6;
   let tfModel = null, _ready = false;
+  const roiCanvas = document.createElement('canvas');
+  const roiCtx = roiCanvas.getContext('2d', { willReadFrequently: true });
 
-  // Load MobileNetV2
   async function loadTF() {
     if (_ready) return true;
     try {
       if (!window.tf || !window.mobilenet) return false;
+      if (window.tf?.setBackend && window.tf?.ready) {
+        for (const backend of ['webgl', 'wasm', 'cpu']) {
+          try {
+            await tf.setBackend(backend);
+            await tf.ready();
+            break;
+          } catch(e) { console.warn('[Bio] Backend', backend, 'failed:', e.message); }
+        }
+      }
       tfModel = await mobilenet.load({ version: 2, alpha: 1.0 });
+      try {
+        const warm = tf.zeros([1, 224, 224, 3]);
+        const out = tfModel.infer(warm, true);
+        await out.data();
+        out.dispose();
+        warm.dispose();
+      } catch(e) { console.warn('[Bio] Warmup failed:', e.message); }
       _ready = true;
       console.log('[Bio] MobileNet ready');
       return true;
     } catch(e) { console.warn('[Bio] MobileNet failed:', e.message); return false; }
   }
 
-  // Visual embedding from video frame
+  function clamp01(v) { return Math.min(1, Math.max(0, v)); }
+
+  function samplePalmPatch(videoEl, bbox, size = 64) {
+    if (!videoEl || videoEl.readyState < 2 || !roiCtx) return null;
+    const vw = videoEl.videoWidth || 0;
+    const vh = videoEl.videoHeight || 0;
+    if (!vw || !vh) return null;
+
+    let x = 0, y = 0, w = vw, h = vh;
+    if (bbox) {
+      const pad = 0.18;
+      x = Math.max(0, Math.round((bbox.x - bbox.w * pad) * vw));
+      y = Math.max(0, Math.round((bbox.y - bbox.h * pad) * vh));
+      w = Math.max(8, Math.min(vw - x, Math.round(bbox.w * (1 + pad * 2) * vw)));
+      h = Math.max(8, Math.min(vh - y, Math.round(bbox.h * (1 + pad * 2) * vh)));
+    }
+
+    roiCanvas.width = size;
+    roiCanvas.height = size;
+    roiCtx.clearRect(0, 0, size, size);
+    roiCtx.drawImage(videoEl, x, y, w, h, 0, 0, size, size);
+
+    const pixels = roiCtx.getImageData(0, 0, size, size).data;
+    const gray = new Float32Array(size * size);
+    let sum = 0, sumSq = 0, glare = 0;
+    for (let i = 0, p = 0; i < pixels.length; i += 4, p++) {
+      const g = 0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2];
+      gray[p] = g;
+      sum += g;
+      sumSq += g * g;
+      if (g > 245) glare++;
+    }
+
+    const count = size * size;
+    const brightness = sum / count;
+    const contrast = Math.sqrt(Math.max(0, sumSq / count - brightness * brightness));
+    const orientHist = new Array(8).fill(0);
+    const cellEnergy = new Array(16).fill(0);
+    let edgeEnergy = 0, edgeCount = 0, lapSum = 0, lapSq = 0, centralLineEnergy = 0;
+
+    for (let yy = 1; yy < size - 1; yy++) {
+      for (let xx = 1; xx < size - 1; xx++) {
+        const idx = yy * size + xx;
+        const tl = gray[idx - size - 1], tc = gray[idx - size], tr = gray[idx - size + 1];
+        const ml = gray[idx - 1], mr = gray[idx + 1];
+        const bl = gray[idx + size - 1], bc = gray[idx + size], br = gray[idx + size + 1];
+        const gx = -tl - 2 * ml - bl + tr + 2 * mr + br;
+        const gy = -tl - 2 * tc - tr + bl + 2 * bc + br;
+        const mag = Math.hypot(gx, gy);
+        const lap = 4 * gray[idx] - tc - bc - ml - mr;
+        const cell = Math.min(15, Math.floor(yy / (size / 4)) * 4 + Math.floor(xx / (size / 4)));
+        const angle = (Math.atan2(gy, gx) + Math.PI) / (Math.PI / 4);
+        const bin = Math.max(0, Math.min(7, Math.floor(angle) % 8));
+
+        orientHist[bin] += mag;
+        cellEnergy[cell] += mag;
+        edgeEnergy += mag;
+        lapSum += lap;
+        lapSq += lap * lap;
+        if (mag > 28) edgeCount++;
+        if (xx > size * 0.2 && xx < size * 0.8 && yy > size * 0.2 && yy < size * 0.8) {
+          centralLineEnergy += mag;
+        }
+      }
+    }
+
+    const innerCount = Math.max(1, (size - 2) * (size - 2));
+    const lapMean = lapSum / innerCount;
+    const sharpness = Math.max(0, lapSq / innerCount - lapMean * lapMean);
+    return {
+      size,
+      gray,
+      brightness,
+      contrast,
+      sharpness,
+      glareRatio: glare / count,
+      edgeDensity: edgeCount / innerCount,
+      lineStrength: centralLineEnergy / innerCount,
+      orientHist,
+      cellEnergy
+    };
+  }
+
   async function getVisualEmb(videoEl, bbox) {
     if (!_ready || !tfModel || !window.tf) return null;
     try {
@@ -949,7 +1054,24 @@ const Bio = (() => {
     } catch(e) { return null; }
   }
 
-  // Geometric embedding from 21 landmarks
+  function textureEmb(videoEl, bbox, sample = null) {
+    const patch = sample || samplePalmPatch(videoEl, bbox, 64);
+    if (!patch) return null;
+    const orientSum = patch.orientHist.reduce((s, v) => s + v, 0) || 1;
+    const cellSum = patch.cellEnergy.reduce((s, v) => s + v, 0) || 1;
+    const orient = patch.orientHist.map(v => v / orientSum);
+    const cells = patch.cellEnergy.map(v => v / cellSum);
+    const stats = [
+      patch.brightness / 255,
+      clamp01(patch.contrast / 80),
+      clamp01(Math.log1p(patch.sharpness) / 7),
+      clamp01(patch.edgeDensity * 4),
+      clamp01(patch.lineStrength / 90),
+      1 - clamp01(patch.glareRatio / 0.35)
+    ];
+    return l2([...orient, ...cells, ...stats]);
+  }
+
   function geoEmb(lms) {
     if (!lms || lms.length < 21) return null;
     const p = lms.map(l => [l.x, l.y, l.z||0]);
@@ -982,73 +1104,100 @@ const Bio = (() => {
     return l2(r);
   }
 
-  // ══ Threshold calibration ══
-  // After registration we compute self-similarity across sessions.
-  // Calibrated threshold = selfSim * 0.93 — gives tighter but personalised threshold.
-  // Stored per profile, used in identify().
   function calibrate(sessions) {
     if (sessions.length < 2) return 0; // not enough data
-    const embs = sessions.filter(s=>s.geo||s.visual);
+    const embs = sessions.filter(s=>s.geo||s.visual||s.texture);
     if (embs.length < 2) return 0;
     let sum = 0, n = 0;
     for (let i=0; i<embs.length; i++)
       for (let j=i+1; j<embs.length; j++) {
-        sum += fuseScore(embs[i], embs[j].visual||null, embs[j].geo||null);
+        sum += fuseScore(embs[i], embs[j].visual||null, embs[j].geo||null, embs[j].texture||null);
         n++;
       }
     const selfSim = n > 0 ? sum/n : 0;
-    // Safety: never go below 0.82 or above 0.95
-    return Math.min(0.95, Math.max(0.82, selfSim * 0.93));
+    return Math.min(0.84, Math.max(0.68, selfSim * 0.88));
   }
 
-  // Fused score: weighted visual + geo cosine
-  function fuseScore(profile, curVis, curGeo) {
+  function fuseScore(profile, curVis, curGeo, curTex) {
     let s=0, w=0;
-    if (profile.visual && curVis && profile.visual.length===curVis.length) { s+=cos(profile.visual,curVis)*W_VIS; w+=W_VIS; }
-    if (profile.geo    && curGeo && profile.geo.length===curGeo.length)    { s+=cos(profile.geo,curGeo)*W_GEO;   w+=W_GEO; }
+    if (profile.visual  && curVis && profile.visual.length===curVis.length)   { s+=cos(profile.visual,curVis)*W_VIS; w+=W_VIS; }
+    if (profile.texture && curTex && profile.texture.length===curTex.length)   { s+=cos(profile.texture,curTex)*W_TEX; w+=W_TEX; }
+    if (profile.geo     && curGeo && profile.geo.length===curGeo.length)       { s+=cos(profile.geo,curGeo)*W_GEO; w+=W_GEO; }
     return w>0?s/w:0;
   }
 
-  // Identify against all stored profiles
-  function identify(curVis, curGeo) {
-    const profiles = DB.all();
-    if (!profiles.length) return { match:null, score:0, name:'' };
-    let best=null, bs=0, bn='', secondBest=0;
+  function topChannelId(profiles, key, current) {
+    let bestId = null, bestScore = 0;
     for (const p of profiles) {
-      const s = fuseScore(p, curVis, curGeo);
+      if (!p[key] || !current || p[key].length !== current.length) continue;
+      const score = cos(p[key], current);
+      if (score > bestScore) {
+        bestScore = score;
+        bestId = p.id;
+      }
+    }
+    return bestId;
+  }
+
+  function identify(curVis, curGeo, curTex) {
+    const profiles = DB.all();
+    console.log(`[Bio] identify: ${profiles.length} profiles in DB, input: vis=${curVis?curVis.length:'null'} geo=${curGeo?curGeo.length:'null'} tex=${curTex?curTex.length:'null'}`);
+    if (!profiles.length) return { match:null, score:0, name:'' };
+    const shortlist = curGeo
+      ? profiles
+          .map(profile => ({
+            profile,
+            geoScore: profile.geo && curGeo && profile.geo.length === curGeo.length ? cos(profile.geo, curGeo) : -1
+          }))
+          .sort((a, b) => b.geoScore - a.geoScore)
+          .slice(0, SHORTLIST_SIZE)
+          .map(entry => entry.profile)
+      : profiles;
+    const pool = shortlist.length ? shortlist : profiles;
+    let best=null, bs=0, bn='', secondBest=0;
+    for (const p of pool) {
+      const s = fuseScore(p, curVis, curGeo, curTex);
+      // Detailed per-channel logging
+      const vScore = (p.visual && curVis && p.visual.length===curVis.length) ? cos(p.visual, curVis) : -1;
+      const tScore = (p.texture && curTex && p.texture.length===curTex.length) ? cos(p.texture, curTex) : -1;
+      const gScore = (p.geo && curGeo && p.geo.length===curGeo.length) ? cos(p.geo, curGeo) : -1;
+      console.log(`[Bio]   ${p.name}(${p.id}): fused=${(s*100).toFixed(1)}% | vis=${vScore<0?'N/A':(vScore*100).toFixed(1)+'%'} tex=${tScore<0?'N/A':(tScore*100).toFixed(1)+'%'} geo=${gScore<0?'N/A':(gScore*100).toFixed(1)+'%'} | stored: vis=${p.visual?p.visual.length:0} tex=${p.texture?p.texture.length:0} geo=${p.geo?p.geo.length:0}`);
       if (s>bs) { secondBest=bs; bs=s; best=p; bn=p.name; }
       else if (s>secondBest) { secondBest=s; }
     }
     console.log(`[Bio] ${bn}: ${(bs*100).toFixed(1)}% (2nd: ${(secondBest*100).toFixed(1)}%, margin: ${((bs-secondBest)*100).toFixed(1)}%)`);
     Bio._lastScore=bs; Bio._lastName=bn;
-    // Use calibrated threshold if set, else base threshold
-    const threshold = (best && best.threshold > 0) ? best.threshold : BASE_THRESHOLD;
-    // Margin check: reject if best and second-best are too close
-    const margin = bs - secondBest;
-    if (profiles.length > 1 && margin < MIN_MARGIN) {
-      console.log(`[Bio] Rejected: margin ${(margin*100).toFixed(1)}% < ${(MIN_MARGIN*100).toFixed(0)}% — ambiguous match`);
-      return { match:null, score:bs, name:bn, threshold };
-    }
-    // Cross-channel agreement: visual and geo must agree on the same profile
-    let channelAgree = true;
-    if (profiles.length > 1 && curVis && curGeo) {
-      let bestVisId=null, bvs=0, bestGeoId=null, bgs=0;
-      for (const p of profiles) {
-        if (p.visual && curVis && p.visual.length===curVis.length) {
-          const vs = cos(p.visual, curVis);
-          if (vs > bvs) { bvs=vs; bestVisId=p.id; }
-        }
-        if (p.geo && curGeo && p.geo.length===curGeo.length) {
-          const gs = cos(p.geo, curGeo);
-          if (gs > bgs) { bgs=gs; bestGeoId=p.id; }
+    const rawThreshold = (best && best.threshold > 0) ? best.threshold : BASE_THRESHOLD;
+    const threshold = Math.min(0.84, rawThreshold); // Never exceed calibration cap
+    if (rawThreshold !== threshold) console.log(`[Bio] Capped threshold ${(rawThreshold*100).toFixed(0)}% → ${(threshold*100).toFixed(0)}%`);
+
+    // Extra safety checks only for 4+ profiles
+    if (profiles.length >= 4) {
+      const margin = bs - secondBest;
+      if (margin < MIN_MARGIN) {
+        console.log(`[Bio] Rejected: margin ${(margin*100).toFixed(1)}% < ${(MIN_MARGIN*100).toFixed(0)}% — ambiguous`);
+        return { match:null, score:bs, name:bn, threshold };
+      }
+      // Channel agreement
+      const votes = [
+        topChannelId(pool, 'visual', curVis),
+        topChannelId(pool, 'texture', curTex),
+        topChannelId(pool, 'geo', curGeo)
+      ].filter(Boolean);
+      if (votes.length >= 2) {
+        const counts = votes.reduce((acc, id) => ((acc[id] = (acc[id] || 0) + 1), acc), {});
+        const bestVotes = best ? votes.filter(v => v === best.id).length : 0;
+        if (bestVotes === 0) {
+          console.log(`[Bio] Rejected: no channel agrees (votes: ${JSON.stringify(counts)})`);
+          return { match:null, score:bs, name:bn, threshold };
         }
       }
-      if (bestVisId && bestGeoId && bestVisId !== bestGeoId) {
-        console.log(`[Bio] Rejected: visual→${bestVisId} vs geo→${bestGeoId} — channels disagree`);
-        channelAgree = false;
-      }
+    } else {
+      console.log(`[Bio] Simple mode (${profiles.length} profiles) — threshold only`);
     }
-    if (best && bs>=threshold && channelAgree) return { match:best, score:bs, name:bn, threshold };
+
+    console.log(`[Bio] threshold=${(threshold*100).toFixed(0)}%, score=${(bs*100).toFixed(1)}%, result=${best && bs>=threshold ? 'MATCH' : 'NO MATCH'}`);
+    if (best && bs>=threshold) return { match:best, score:bs, name:bn, threshold };
     return { match:null, score:bs, name:bn, threshold: best?.threshold||BASE_THRESHOLD };
   }
 
@@ -1061,40 +1210,48 @@ const Bio = (() => {
   function l2(v){ const n=Math.sqrt(v.reduce((s,x)=>s+x*x,0))||1; return v.map(x=>x/n); }
   function cos(a,b){ let d=0,na=0,nb=0; for(let i=0;i<a.length;i++){d+=a[i]*b[i];na+=a[i]*a[i];nb+=b[i]*b[i];} return d/(Math.sqrt(na)*Math.sqrt(nb)||1); }
 
-  return { loadTF, getVisualEmb, geoEmb, medianEmb, calibrate, identify, fuseScore,
+  return { loadTF, samplePalmPatch, getVisualEmb, textureEmb, geoEmb, medianEmb, calibrate, identify, fuseScore,
            get ready(){ return _ready; }, _lastScore:0, _lastName:'' };
 })();
 
 /* ── SCAN ENGINE ─────────────────────────────────────────── */
 const Scan = (() => {
-  const P = { INIT:0, WAIT:1, CAP:2, LIVENESS:3, SCAN:4, DONE:5 };
+  const P = { INIT:0, WAIT:1, LIVENESS:2, SCAN:3, DONE:4 };
+  const DET=3;
+  const DETECT_DELAY=55;
+  const LOOP_DELAY=80;
+  const TARGET_FRAMES={ reg:6, pay:4 };
+  const QUALITY_GATE=0.55;
+  const CAPTURE_GATE=0.65;
+  const PASSIVE_GATE=0.48;
+  const MAX_LOST=14;
+  const CAPTURE_COOLDOWN=140;
   let ph=P.INIT, mp=null, mpRdy=false, stream=null, raf=null;
-  let detF=0, lostF=0, scanProg=0, geoEmbs=[], visualEmbs=[];
+  let detF=0, lostF=0, acceptedFrames=0;
   let lastLms=null, lastBbox=null, onDone=null, mode='reg';
-  const DET=5, SPD_R=0.55, SPD_P=3.5;
-
-  // Lighting
-  let lightTimer=null, lightOK=true;
-  // Liveness — randomized challenges to prevent prediction
-  const LV_CH=[
-    {emoji:'☝️',msg:'Согните указательный палец',fn:l=>(l[8].y+l[12].y)/2-l[5].y},
-    {emoji:'🤙',msg:'Согните мизинец',fn:l=>(l[20].y+l[16].y)/2-l[17].y},
-    {emoji:'✊',msg:'Сожмите ладонь в кулак',fn:l=>[4,8,12,16,20].reduce((s,i)=>s+Math.hypot(l[i].x-l[0].x,l[i].y-l[0].y),0)/5},
-    {emoji:'👋',msg:'Помашите ладонью',fn:l=>(l[0].x+l[5].x+l[17].x)/3},
-    {emoji:'👍',msg:'Поднимите большой палец',fn:l=>Math.hypot(l[4].x-l[5].x,l[4].y-l[5].y)}
-  ];
-  const LV={active:false,passed:false,history:[],baseline:null,progress:0,frames:0,THRESH:0.05,NEED:4,ch:null};
-  let scanWaitStart=0; // timer for post-liveness palm re-detection
-  // Multi-angle registration
-  const MA={active:false,session:0,total:3,sessions:[],
-    HINTS:['Держите ладонь прямо','Наклоните влево ~15°','Наклоните вправо ~15°']};
+  let geoEmbs=[], visualEmbs=[], textureEmbs=[], candidates=[];
+  let lightTimer=null, lightOK=true, lastMetrics=null;
+  let passiveHistory=[], captureBusy=false, lastCaptureAt=0;
+  let generation=0, smoothedLms=null, smoothedBox=null, lastLive={score:0,spoofRisk:0};
 
   const $=id=>document.getElementById(id), vid=()=>$('sv'), cvs=()=>$('sc');
 
+  function clamp01(v){ return Math.min(1,Math.max(0,v)); }
+  function avg(arr){ return arr.length?arr.reduce((s,v)=>s+v,0)/arr.length:0; }
+  function std(arr){ const m=avg(arr); return Math.sqrt(avg(arr.map(v=>(v-m)*(v-m)))); }
+  function mix(a,b,t){ return a+(b-a)*t; }
+  function dist2(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
+  function targetFrames(){ return TARGET_FRAMES[mode] || TARGET_FRAMES.pay; }
+  function resetCaptureState(){
+    acceptedFrames=0; geoEmbs=[]; visualEmbs=[]; textureEmbs=[]; candidates=[]; passiveHistory=[]; captureBusy=false; lastCaptureAt=0;
+    lastMetrics=null; lastLive={score:0,spoofRisk:0}; sp(0); if($('shdf')) $('shdf').style.width='0%';
+  }
+  function resetTrackingState(){
+    detF=0; lostF=0; lastLms=null; lastBbox=null; smoothedLms=null; smoothedBox=null;
+  }
   function setPhase(p){
     ph=p; const z=$('szone'); if(!z)return; z.className='szone';
     if(p===P.LIVENESS||p===P.SCAN) z.classList.add('d');
-    else if(p===P.CAP) z.classList.add('c');
     else z.classList.add('w');
   }
   function st(msg,col,sub=''){
@@ -1102,28 +1259,31 @@ const Scan = (() => {
     const sl=$('ssl'); if(sl) sl.textContent=sub;
   }
   function sp(pct,col='#2E7D32'){ const b=$('spb'); if(!b)return; b.style.width=pct+'%'; b.style.background=col; }
-
-  // MODULE: Lighting
-  function analyzeLighting(){
-    try{
-      const v=vid(); if(!v||v.readyState<2)return;
-      const c=document.createElement('canvas'); c.width=32; c.height=24;
-      const ctx=c.getContext('2d'); ctx.drawImage(v,0,0,32,24);
-      const d=ctx.getImageData(0,0,32,24).data;
-      let sum=0,n2=0; for(let i=0;i<d.length;i+=4){sum+=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];n2++;}
-      const avg=sum/n2;
-      let vr=0; for(let i=0;i<d.length;i+=4){const l=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];vr+=(l-avg)**2;} vr/=n2;
-      const ic=$('light-icon'),tx=$('light-text'),ind=$('light-indicator'); if(!ind)return;
-      ind.style.display='flex';
-      if(avg<38){ic.textContent='🔦';tx.textContent='Темно';tx.style.color='#E53935';lightOK=false;}
-      else if(avg>215||vr>2800){ic.textContent='☀️';tx.textContent='Ярко';tx.style.color='#F57C00';lightOK=false;}
-      else{ic.textContent='✓';tx.textContent='Свет OK';tx.style.color='#2E7D32';lightOK=true;}
-    }catch{lightOK=true;}
+  function showPassiveUI(show){ const p=$('liveness-prompt'); if(p) p.style.display=show?'flex':'none'; }
+  function updatePassiveUI(metrics, live){
+    const m=$('liveness-msg'),b=$('liveness-bar'),e=$('liveness-emoji');
+    const progress=Math.round(100*clamp01((metrics?.quality||0)*0.55 + (live?.score||0)*0.45));
+    if(e)e.textContent=live?.spoofRisk>0.62?'🛑':progress>70?'✅':'🛡️';
+    if(m)m.textContent=live?.spoofRisk>0.62?'Нужен живой поток, фото не подойдёт':progress>70?'Живость подтверждена, выбираем кадр':'Пассивная проверка живости и качества';
+    if(b)b.style.width=progress+'%';
   }
-  function startLight(){ stopLight(); analyzeLighting(); lightTimer=setInterval(analyzeLighting,900); }
+
+  function analyzeLighting(){
+    const ic=$('light-icon'),tx=$('light-text'),ind=$('light-indicator');
+    if(!ind) return;
+    if(!lastMetrics){ind.style.display='none';lightOK=true;return;}
+    ind.style.display='flex';
+    if(lastMetrics.brightness<65){
+      ic.textContent='🔦';tx.textContent='Темно';tx.style.color='#E53935';lightOK=false;
+    }else if(lastMetrics.brightness>205||lastMetrics.glare>0.18){
+      ic.textContent='☀️';tx.textContent='Блики';tx.style.color='#F57C00';lightOK=false;
+    }else{
+      ic.textContent='✓';tx.textContent='Свет OK';tx.style.color='#2E7D32';lightOK=true;
+    }
+  }
+  function startLight(){ stopLight(); analyzeLighting(); lightTimer=setInterval(analyzeLighting,650); }
   function stopLight(){ if(lightTimer){clearInterval(lightTimer);lightTimer=null;} const ind=$('light-indicator'); if(ind)ind.style.display='none'; }
 
-  // MODULE: Camera distance indicator
   function camDist(state){
     const wrap=$('cam-dist'), icon=$('cam-dist-icon'), txt=$('cam-dist-text');
     if(!wrap||!icon||!txt)return;
@@ -1147,62 +1307,161 @@ const Scan = (() => {
     }
   }
 
-  // MODULE: Liveness detection — random challenge each time
-  function lvStart(){
-    const ch=LV_CH[Math.floor(Math.random()*LV_CH.length)];
-    Object.assign(LV,{active:true,passed:false,history:[],baseline:null,progress:0,frames:0,ch});
-    const p=$('liveness-prompt'); if(p)p.style.display='block'; lvUI();
+  function handOpenness(lms){
+    const palmSpan=Math.max(1e-3,dist2(lms[5],lms[17]));
+    const tips=[4,8,12,16,20];
+    const avgTip=tips.reduce((s,i)=>s+dist2(lms[i],lms[0]),0)/tips.length/palmSpan;
+    const spread=(dist2(lms[8],lms[12])+dist2(lms[12],lms[16])+dist2(lms[16],lms[20]))/palmSpan;
+    return clamp01((avgTip-2.1)/1.25)*0.65 + clamp01((spread-1.0)/1.1)*0.35;
   }
-  function lvStop(){ LV.active=false; const p=$('liveness-prompt'); if(p)p.style.display='none'; }
-  function lvUI(){
-    const m=$('liveness-msg'),b=$('liveness-bar'),e=$('liveness-emoji');
-    if(m)m.textContent=LV.passed?'✓ Живость подтверждена':(LV.ch?.msg||'Выполните действие');
-    if(e)e.textContent=LV.passed?'✅':(LV.ch?.emoji||'🤚');
-    if(b)b.style.width=LV.progress+'%';
+  function palmPose(lms){
+    const span=Math.max(1e-3,dist2(lms[5],lms[17]));
+    const skew=(((lms[5].x+lms[17].x)/2)-lms[9].x)/span;
+    const tilt=Math.abs(lms[9].x-lms[0].x)/Math.max(1e-3,Math.abs(lms[9].y-lms[0].y)+0.01);
+    return {skew,frontality:clamp01(1-Math.abs(skew)*2.4-tilt*0.55)};
   }
-  function lvProcess(lms){
-    if(!LV.active||!lms||lms.length<21||!LV.ch)return false;
-    const val=LV.ch.fn(lms);
-    LV.history.push(val);
-    if(LV.history.length<3)return false;
-    if(!LV.baseline&&LV.history.length>=3) LV.baseline=LV.history.slice(0,3).reduce((a,b)=>a+b,0)/3;
-    if(LV.history.length>20)LV.history.shift();
-    const dev=Math.max(...LV.history.slice(-5))-Math.min(...LV.history.slice(-5));
-    if(dev>LV.THRESH){LV.frames++;LV.progress=Math.min(100,LV.frames/LV.NEED*100);lvUI();}
-    if(LV.frames>=LV.NEED&&!LV.passed){
-      LV.passed=true;LV.progress=100;lvUI();
-      if(navigator.vibrate)navigator.vibrate([30,30,60]);
-      setTimeout(lvStop,700);return true;
+  function sizeScore(box){
+    const size=Math.max(box.w,box.h);
+    if(size<0.16) return clamp01((size-0.08)/0.08);
+    if(size>0.62) return clamp01((0.85-size)/0.23);
+    return clamp01(1-Math.abs(size-0.34)/0.28);
+  }
+  function centerScore(box){
+    const cx=box.x+box.w/2,cy=box.y+box.h/2;
+    const dx=Math.abs(cx-0.5),dy=Math.abs(cy-0.52);
+    return clamp01(1-Math.hypot(dx/0.38,dy/0.42));
+  }
+  function smoothLandmarks(next){
+    if(!smoothedLms){ smoothedLms=next.map(p=>({...p})); return smoothedLms; }
+    smoothedLms=next.map((pt,i)=>({
+      x:mix(smoothedLms[i].x,pt.x,0.45),
+      y:mix(smoothedLms[i].y,pt.y,0.45),
+      z:mix(smoothedLms[i].z||0,pt.z||0,0.45)
+    }));
+    return smoothedLms;
+  }
+  function smoothBBox(next){
+    if(!smoothedBox){ smoothedBox={...next}; return smoothedBox; }
+    smoothedBox={
+      x:mix(smoothedBox.x,next.x,0.45),
+      y:mix(smoothedBox.y,next.y,0.45),
+      w:mix(smoothedBox.w,next.w,0.45),
+      h:mix(smoothedBox.h,next.h,0.45)
+    };
+    return smoothedBox;
+  }
+  function analyzeFrame(){
+    if(!lastLms||!lastBbox) return null;
+    const sample=Bio.samplePalmPatch(vid(),lastBbox,64);
+    if(!sample) return null;
+    const pose=palmPose(lastLms);
+    const metrics={
+      sample,
+      brightness:sample.brightness,
+      contrast:sample.contrast,
+      sharpness:sample.sharpness,
+      glare:sample.glareRatio,
+      lineStrength:sample.lineStrength,
+      edgeDensity:sample.edgeDensity,
+      openness:handOpenness(lastLms),
+      frontality:pose.frontality,
+      poseSkew:pose.skew,
+      sizeScore:sizeScore(lastBbox),
+      centerScore:centerScore(lastBbox),
+      exposureScore:clamp01(1-Math.abs(sample.brightness-128)/90),
+      contrastScore:clamp01(sample.contrast/58),
+      sharpnessScore:clamp01(Math.log1p(sample.sharpness)/7),
+      textureScore:clamp01(sample.lineStrength/72)
+    };
+    metrics.quality=clamp01(
+      0.20*metrics.sizeScore +
+      0.15*metrics.centerScore +
+      0.16*metrics.openness +
+      0.14*metrics.frontality +
+      0.13*metrics.exposureScore +
+      0.10*metrics.contrastScore +
+      0.07*metrics.sharpnessScore +
+      0.05*metrics.textureScore -
+      0.12*clamp01((metrics.glare-0.14)/0.22)
+    );
+    return metrics;
+  }
+  function assessPassiveLiveness(metrics){
+    if(!metrics||!lastLms||!lastBbox) return {score:0,spoofRisk:0.5};
+    passiveHistory.push({
+      t:performance.now(),
+      bbox:{...lastBbox},
+      brightness:metrics.brightness,
+      quality:metrics.quality,
+      glare:metrics.glare,
+      openness:metrics.openness,
+      lms:[0,4,8,12,16,20].map(i=>({x:lastLms[i].x,y:lastLms[i].y}))
+    });
+    if(passiveHistory.length>18) passiveHistory.shift();
+    if(passiveHistory.length<5) return {score:clamp01(metrics.quality*0.35),spoofRisk:0.42};
+
+    let motion=0,samples=0;
+    for(let i=1;i<passiveHistory.length;i++){
+      const prev=passiveHistory[i-1],cur=passiveHistory[i];
+      const scale=Math.max(1e-3,Math.max(cur.bbox.w,cur.bbox.h));
+      const frameMotion=cur.lms.reduce((sum,pt,idx)=>sum+Math.hypot(pt.x-prev.lms[idx].x,pt.y-prev.lms[idx].y),0)/cur.lms.length;
+      motion+=frameMotion/scale;
+      samples++;
     }
-    return LV.passed;
+    const motionAvg=samples?motion/samples:0;
+    const brightnessVar=std(passiveHistory.map(v=>v.brightness));
+    const sizeVar=std(passiveHistory.map(v=>Math.max(v.bbox.w,v.bbox.h)));
+    const opennessVar=std(passiveHistory.map(v=>v.openness));
+    const avgQuality=avg(passiveHistory.map(v=>v.quality));
+    const avgGlare=avg(passiveHistory.map(v=>v.glare));
+
+    const microScore=clamp01((motionAvg-0.010)/0.060);
+    const lightScore=clamp01((brightnessVar-0.6)/8);
+    const scaleScore=clamp01((sizeVar-0.002)/0.020);
+    const opennessScore=clamp01((opennessVar-0.006)/0.060);
+    const stillRisk=clamp01((0.014-motionAvg)/0.014);
+    const glareRisk=clamp01((avgGlare-0.16)/0.18);
+    const flatRisk=clamp01((0.10-avgQuality)/0.10);
+    const spoofRisk=clamp01(0.45*stillRisk+0.35*glareRisk+0.20*flatRisk);
+    const score=clamp01(0.38*microScore+0.16*lightScore+0.18*scaleScore+0.12*opennessScore+0.16*avgQuality-0.45*spoofRisk);
+    return {score,spoofRisk,motionAvg,brightnessVar,sizeVar};
+  }
+  async function maybeCaptureCandidate(metrics,live){
+    if(captureBusy||!metrics||!lastBbox||!lastLms) return;
+    if(metrics.quality<CAPTURE_GATE||live.score<PASSIVE_GATE||live.spoofRisk>0.62) return;
+    if(Date.now()-lastCaptureAt<CAPTURE_COOLDOWN) return;
+    const gen=generation;
+    const box={...lastBbox};
+    const lms=lastLms.map(p=>({...p}));
+    const sample=metrics.sample;
+    captureBusy=true;
+    lastCaptureAt=Date.now();
+    try{
+      const geo=Bio.geoEmb(lms);
+      const visual=Bio.ready?await Bio.getVisualEmb(vid(),box):null;
+      const texture=Bio.textureEmb(vid(),box,sample);
+      if(gen!==generation||ph>=P.DONE) return;
+      if(!(geo||visual||texture)) return;
+      candidates.push({geo,visual,texture,quality:metrics.quality,live:live.score});
+      console.log(`[Scan] Candidate #${candidates.length}: geo=${geo?geo.length:'-'}, vis=${visual?visual.length:'-'}, tex=${texture?texture.length:'-'}, q=${metrics.quality.toFixed(2)}, live=${live.score.toFixed(2)}`);
+      if(geo) geoEmbs.push(geo);
+      if(visual) visualEmbs.push(visual);
+      if(texture) textureEmbs.push(texture);
+      acceptedFrames++;
+      if(acceptedFrames===1){
+        const fl=$('sflash');if(fl){fl.style.opacity='.45';setTimeout(()=>fl.style.opacity='0',140);}
+        if(navigator.vibrate)navigator.vibrate(28);
+        setPhase(P.SCAN);
+      }
+      sp(Math.min(100,acceptedFrames/targetFrames()*100));
+      st(mode==='reg'?'Автосбор биометрии':'Автовыбор лучшего кадра','#2E7D32',`Кадры: ${acceptedFrames}/${targetFrames()}`);
+      updatePassiveUI(metrics,{score:Math.max(live.score,acceptedFrames/targetFrames()),spoofRisk:live.spoofRisk});
+      if(acceptedFrames>=targetFrames()) complete();
+    }finally{
+      if(gen===generation) captureBusy=false;
+    }
   }
 
-  // MODULE: Multi-angle registration
-  function maInit(){ MA.session=0;MA.sessions=[];const b=$('multi-angle-bar');if(b)b.style.display='block';maUI(); }
-  function maUI(){
-    const l=$('angle-session-label'),h=$('angle-hint');
-    if(l)l.textContent=`${MA.session+1} из ${MA.total}`;
-    if(h)h.textContent=MA.HINTS[MA.session]||'';
-    for(let i=0;i<MA.total;i++){const d=$(`adot${i}`);if(d)d.style.background=i<MA.session?'#2E7D32':i===MA.session?'#A5D6A7':'var(--bd)';}
-  }
-  function maNext(){
-    MA.sessions.push({geo:Bio.medianEmb(geoEmbs),visual:Bio.medianEmb(visualEmbs)});
-    MA.session++;geoEmbs=[];visualEmbs=[];scanProg=0;
-    if(MA.session>=MA.total){maFinish();return;}
-    setPhase(P.WAIT);detF=0;lostF=0;Object.assign(LV,{passed:false,history:[],baseline:null,progress:0,frames:0});
-    sp(0);maUI();st(`Сессия ${MA.session+1}/${MA.total}`, '#2E7D32', MA.HINTS[MA.session]);
-    const fl=$('sflash');if(fl){fl.style.opacity='.4';setTimeout(()=>fl.style.opacity='0',300);}
-  }
-  function maFinish(){
-    const fused={geo:Bio.medianEmb(MA.sessions.filter(s=>s.geo).map(s=>s.geo)),visual:Bio.medianEmb(MA.sessions.filter(s=>s.visual).map(s=>s.visual))};
-    // ══ CALIBRATION: compute personalised threshold ══
-    fused._calibThreshold = Bio.calibrate(MA.sessions);
-    const bar=$('multi-angle-bar');if(bar)bar.style.display='none';
-    setPhase(P.DONE);clearRaf();vid().classList.remove('rdy');
-    if(typeof onDone==='function')onDone(fused);
-  }
-
-  // MediaPipe init
   async function initMP(){
     $('citxt').textContent='Настройка сканера ладони...';
     try{
@@ -1211,6 +1470,7 @@ const Scan = (() => {
       let res=null; mp.onResults(r=>{res=r;});
       await mp.initialize();mpRdy=true;
       mp._get=()=>{const r=res;res=null;return r;};
+      console.log('[Scan] MediaPipe Hands ready');
     }catch(e){console.warn('[Scan] MP fail:',e.message);mpRdy=false;}
   }
 
@@ -1218,22 +1478,27 @@ const Scan = (() => {
   async function initTF(){
     $('citxt').textContent='Подготовка биометрии...';
     const ok=await Bio.loadTF();
-    $('citxt').textContent=ok?'Система готова':'Система готова';
+    $('citxt').textContent=ok?'Система готова':'Без визуальной биометрии';
   }
 
-  // Camera
   async function openCam(){
     try{
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}}});
-      const v=vid();v.srcObject=stream;await v.play();v.classList.add('rdy');return true;
+      const camP=navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}}});
+      const tmoP=new Promise((_,rej)=>setTimeout(()=>rej({name:'TimeoutError',message:'Таймаут камеры (10с). Попробуйте открыть через https://.'}),10000));
+      stream=await Promise.race([camP,tmoP]);
+      const v=vid();v.srcObject=stream;await v.play();v.classList.add('rdy');
+      console.log('[Scan] Camera opened OK');
+      return true;
     }catch(e){
-      const msgs={NotAllowedError:'Доступ к камере запрещён.\n\nНастройки → Safari → Камера → Разрешить',NotFoundError:'Камера не найдена.',NotReadableError:'Камера занята другим приложением.'};
+      console.warn('[Scan] Camera failed:',e.name,e.message);
+      stream=null;
+      const msgs={NotAllowedError:'Доступ к камере запрещён.\n\nРазрешите камеру в настройках браузера.',NotFoundError:'Камера не найдена.',NotReadableError:'Камера занята другим приложением.',TimeoutError:e.message};
       $('cemsg').textContent=msgs[e.name]||'Ошибка: '+e.message;
-      $('ceo').classList.add('show');$('cio').style.display='none';return false;
+      return false;
     }
   }
 
-  // Draw skeleton + palm contour
+
   function drawSkel(lms,W,H){
     const c=cvs();c.width=W;c.height=H;
     const ctx=c.getContext('2d');ctx.clearRect(0,0,W,H);
@@ -1290,21 +1555,18 @@ const Scan = (() => {
         ctx.strokeStyle=`rgba(165,214,167,${p2})`;ctx.lineWidth=1.5;ctx.stroke();
       }
     });
-    // Visual quality indicator
-    if(ph===P.SCAN&&visualEmbs.length>0){
-      const q=Math.min(visualEmbs.length/25,1);
+    if(ph===P.SCAN&&acceptedFrames>0){
+      const q=Math.min(acceptedFrames/Math.max(1,targetFrames()),1);
       ctx.fillStyle='rgba(255,255,255,.15)';ctx.fillRect(W-54,8,44,4);
       ctx.fillStyle=`rgba(165,214,167,${.5+q*.5})`;ctx.fillRect(W-54,8,44*q,4);
     }
   }
 
-  // Render loop
   function startRender(){
     function loop(){ if(ph>=P.DONE)return; const c=cvs(),W=c.offsetWidth,H=c.offsetHeight; if(lastLms)drawSkel(lastLms,W,H); else{c.width=W;c.height=H;c.getContext('2d').clearRect(0,0,W,H);} raf=requestAnimationFrame(loop); }
     raf=requestAnimationFrame(loop);
   }
 
-  // Detection loop (async)
   async function detectLoop(){
     const v=vid();
     while(ph<P.DONE){
@@ -1314,118 +1576,160 @@ const Scan = (() => {
             await mp.send({image:v});await new Promise(r=>setTimeout(r,8));
             const res=mp._get();
             if(res?.multiHandLandmarks?.length){
-              lastLms=res.multiHandLandmarks[0];
-              const xs=lastLms.map(l=>l.x),ys=lastLms.map(l=>l.y);
-              lastBbox={x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)};
-            }else{lastLms=null;lastBbox=null;}
-          }catch{lastLms=null;lastBbox=null;}
-        }else{lastLms=null;lastBbox=null;}
-        // Visual embedding collection
-        if(ph===P.SCAN&&lastLms&&Bio.ready){
-          try{const ve=await Bio.getVisualEmb(v,lastBbox);if(ve)visualEmbs.push(ve);}catch{}
+              const rawLms=res.multiHandLandmarks[0].map(l=>({x:l.x,y:l.y,z:l.z||0}));
+              const xs=rawLms.map(l=>l.x),ys=rawLms.map(l=>l.y);
+              lastLms=smoothLandmarks(rawLms);
+              lastBbox=smoothBBox({x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)});
+            }else{
+              lastLms=null;lastBbox=null;smoothedLms=null;smoothedBox=null;
+            }
+          }catch(e){
+            console.warn('[Scan] MP send error:', e.message);
+            lastLms=null;lastBbox=null;smoothedLms=null;smoothedBox=null;
+          }
+        }else{
+          lastLms=null;lastBbox=null;smoothedLms=null;smoothedBox=null;
         }
       }
-      await new Promise(r=>setTimeout(r,80));
+      await new Promise(r=>setTimeout(r,DETECT_DELAY));
     }
   }
 
-  // State machine
   function tick(){
     if(ph>=P.DONE)return;
-    const h=!!lastLms;
-
-    if(ph===P.WAIT){
-      if(!lightOK&&!h){st('🔦 Включите свет для сканирования','#E53935','Нужно равномерное освещение');setTimeout(tick,120);return;}
-      if(h){
-        const sz=lastBbox?Math.max(lastBbox.w,lastBbox.h):0.4;
-    if(sz<0.14){
-      st('↔️ Подвиньте ладонь ближе','#F57C00','Слишком далеко');
-      camDist('far');
-      detF=Math.max(0,detF-1);$('shdf').style.width=(detF/DET*100)+'%';setTimeout(tick,80);return;
-    }
-    if(sz>0.92){
-      st('↔️ Отдалите ладонь','#F57C00','Слишком близко');
-      camDist('close');
-      detF=Math.max(0,detF-1);$('shdf').style.width=(detF/DET*100)+'%';setTimeout(tick,80);return;
-    }
-    camDist('ok');
-        detF++;$('shdf').style.width=(detF/DET*100)+'%';
-        st('🤚 Ладонь обнаружена','#2E7D32',`Захват: ${detF}/${DET}`);
-        if(detF>=DET){
-          const fl=$('sflash');if(fl){fl.style.opacity='.7';setTimeout(()=>fl.style.opacity='0',200);}
-          if(navigator.vibrate)navigator.vibrate(70);
-          setPhase(P.LIVENESS);lvStart();lostF=0;geoEmbs=[];visualEmbs=[];scanProg=0;sp(0);
-          st((LV.ch?.emoji||'🤚')+' '+(LV.ch?.msg||'Выполните действие'),'#1565C0','Подтверждение живости');
-        }
-      }else{
-        detF=Math.max(0,detF-1);$('shdf').style.width=(detF/DET*100)+'%';
-        st('Поместите ладонь в рамку','#7A9185',MA.active?MA.HINTS[MA.session]:'Раскройте ладонь, пальцы вперёд');sp(0);
-    camDist('none');
-      }
-
-    }else if(ph===P.LIVENESS){
-      if(!h){lostF++;if(lostF>15){setPhase(P.WAIT);detF=0;lostF=0;lvStop();st('⚠ Ладонь убрана','#E53935','');sp(0);}else st('☝️ Не убирайте ладонь...','#F57C00',`${lostF}/15`);}
-      else{lostF=0;const ok=lvProcess(lastLms);if(ok)setTimeout(()=>{lvStop();scanWaitStart=Date.now();setPhase(P.SCAN);st('🤚 Раскройте ладонь для сканирования','#2E7D32','');},500);else st((LV.ch?.emoji||'🤚')+' '+(LV.ch?.msg||''),'#1565C0',`${Math.round(LV.progress)}%`);}
-
-    }else if(ph===P.SCAN){
-      if(h){
-        lostF=0;scanWaitStart=0;const ge=Bio.geoEmb(lastLms);if(ge)geoEmbs.push(ge);
-        const spd=mode==='reg'?SPD_R:SPD_P;scanProg=Math.min(100,scanProg+spd);sp(scanProg);$('shdf').style.width='100%';
-        const ng=geoEmbs.length,nv=visualEmbs.length,hv=Bio.ready;
-        if(mode==='reg'&&MA.active){
-          const sl=`Сессия ${MA.session+1}/${MA.total}`;
-          if(scanProg<35)st(`${sl} — Захват`,'#2E7D32',`Кадров: ${ng}${hv?` / ${nv}`:''}`);
-          else if(scanProg<70)st(`${sl} — Признаки`,'#1565C0','Обрабатывается...');
-          else st(`${sl} — Завершение`,'#2E7D32','Почти готово...');
-        }else{
-          if(scanProg<25)st('Анализ структуры ладони...','#2E7D32',`Геометрия: ${ng}${hv?`  Визуал: ${nv}`:''}`);
-          else if(scanProg<55)st('Извлечение признаков...','#1565C0',`Кадров: ${ng}${hv?` / ${nv}`:''}`);
-          else if(scanProg<80)st(mode==='reg'?'Формирование профиля...':'Сравнение с базой...','#E65100',`Точность: ${hv?'высокая':'средняя'}`);
-          else st('Финальная верификация...','#2E7D32','🔒 Двойная биометрия');
-        }
-        if(scanProg>=100){if(mode==='reg'&&MA.active)maNext();else{setPhase(P.DONE);complete();}}
+    const hasHand=!!lastLms;
+    if(!hasHand){
+      camDist('none');
+      lastMetrics=null;
+      analyzeLighting();
+      if(ph===P.WAIT){
+        detF=Math.max(0,detF-1); if($('shdf')) $('shdf').style.width=(detF/DET*100)+'%';
+        st('Держите руку естественно в зоне камеры','#7A9185',mode==='reg'?'Система соберёт биометрию автоматически':'Лучший кадр будет захвачен автоматически');
       }else{
         lostF++;
-        // 5-second timeout if palm not re-opened after liveness
-        if(scanProg===0 && scanWaitStart>0 && Date.now()-scanWaitStart>5000){
-          setPhase(P.WAIT);detF=0;lostF=0;scanProg=0;scanWaitStart=0;geoEmbs=[];visualEmbs=[];$('shdf').style.width='0%';sp(0);
-          st('⏰ Время вышло — начните снова','#E53935','');
-        }else if(lostF>18){
-          setPhase(P.WAIT);detF=0;lostF=0;scanProg=0;scanWaitStart=0;geoEmbs=[];visualEmbs=[];$('shdf').style.width='0%';sp(0);
-          st('⚠ Ладонь убрана — начните снова','#E53935','');
+        if(lostF>MAX_LOST){
+          resetCaptureState(); resetTrackingState(); showPassiveUI(false); setPhase(P.WAIT);
+          st('⚠ Рука вне кадра — начните снова','#E53935','');
         }else{
-          st('Не уводите ладонь...','#F57C00',`Потеряно: ${lostF}/18`);
+          st('Не уводите руку из кадра','#F57C00',`${lostF}/${MAX_LOST}`);
         }
       }
+      setTimeout(tick,LOOP_DELAY);
+      return;
     }
-    setTimeout(tick,80);
+
+    const metrics=analyzeFrame();
+    lastMetrics=metrics;
+    analyzeLighting();
+    if(!metrics){ setTimeout(tick,LOOP_DELAY); return; }
+
+    const size=Math.max(lastBbox.w,lastBbox.h);
+    if(size<0.14){
+      camDist('far'); detF=Math.max(0,detF-1); if($('shdf')) $('shdf').style.width=(detF/DET*100)+'%';
+      st('↔️ Подвиньте руку ближе','#F57C00','Слишком далеко');
+      setTimeout(tick,LOOP_DELAY);
+      return;
+    }
+    if(size>0.78){
+      camDist('close'); detF=Math.max(0,detF-1); if($('shdf')) $('shdf').style.width=(detF/DET*100)+'%';
+      st('↔️ Отдалите руку','#F57C00','Слишком близко');
+      setTimeout(tick,LOOP_DELAY);
+      return;
+    }
+    camDist('ok');
+
+    if(ph===P.WAIT){
+      if(!lightOK){
+        st('🔦 Добавьте равномерный свет','#E53935','Без бликов и резких теней');
+        setTimeout(tick,LOOP_DELAY);
+        return;
+      }
+      if(metrics.openness<0.35){
+        detF=Math.max(0,detF-1); if($('shdf')) $('shdf').style.width=(detF/DET*100)+'%';
+        st('Покажите открытую ладонь','#F57C00','Кулак и сильный изгиб не подойдут');
+        setTimeout(tick,LOOP_DELAY);
+        return;
+      }
+      if(metrics.quality<QUALITY_GATE){
+        detF=Math.max(0,detF-1); if($('shdf')) $('shdf').style.width=(detF/DET*100)+'%';
+        st('Ищем лучший ракурс','#7A9185',`Качество: ${Math.round(metrics.quality*100)}%`);
+        setTimeout(tick,LOOP_DELAY);
+        return;
+      }
+      detF=Math.min(DET,detF+1); if($('shdf')) $('shdf').style.width=(detF/DET*100)+'%';
+      st('Рука найдена, запускаем passive-анализ','#2E7D32',`Качество: ${Math.round(metrics.quality*100)}%`);
+      if(detF>=DET){
+        const fl=$('sflash');if(fl){fl.style.opacity='.35';setTimeout(()=>fl.style.opacity='0',140);}
+        setPhase(P.LIVENESS); lostF=0; passiveHistory=[]; showPassiveUI(true); updatePassiveUI(metrics,{score:0,spoofRisk:0});
+        st('Пассивная проверка живости','#1565C0','Без жестов и дополнительных действий');
+      }
+      setTimeout(tick,LOOP_DELAY);
+      return;
+    }
+
+    lostF=0;
+    const live=assessPassiveLiveness(metrics);
+    lastLive=live;
+    updatePassiveUI(metrics,live);
+    if(live.spoofRisk>0.68){
+      st('🛑 Высокий риск спуфинга','#E53935','Нужен живой видеопоток без фото и экранов');
+    }else if(acceptedFrames===0){
+      st('Пассивная проверка живости','#1565C0',`Liveness: ${Math.round(live.score*100)}%`);
+    }else{
+      st(mode==='reg'?'Автосбор биометрии':'Автовыбор лучшего кадра','#2E7D32',`Liveness: ${Math.round(live.score*100)}% · Кадры: ${acceptedFrames}/${targetFrames()}`);
+    }
+    if(metrics.quality>=QUALITY_GATE) void maybeCaptureCandidate(metrics,live);
+    setTimeout(tick,LOOP_DELAY);
   }
 
   function complete(){
-    const result={geo:Bio.medianEmb(geoEmbs),visual:Bio.medianEmb(visualEmbs)};
-    clearRaf();vid().classList.remove('rdy');
+    if(ph===P.DONE) return;
+    const top=candidates
+      .slice()
+      .sort((a,b)=>(b.quality*0.7+b.live*0.3)-(a.quality*0.7+a.live*0.3))
+      .slice(0,mode==='reg'?4:3);
+    const result={
+      geo:Bio.medianEmb((top.length?top:candidates).map(c=>c.geo).filter(Boolean)),
+      visual:Bio.medianEmb((top.length?top:candidates).map(c=>c.visual).filter(Boolean)),
+      texture:Bio.medianEmb((top.length?top:candidates).map(c=>c.texture).filter(Boolean)),
+      _passiveScore:avg((top.length?top:candidates).map(c=>c.live)),
+      _qualityScore:avg((top.length?top:candidates).map(c=>c.quality)),
+      _calibThreshold:mode==='reg'?Bio.calibrate(top.length?top:candidates):0
+    };
+    console.log(`[Scan] complete(): candidates=${candidates.length}, top=${top.length}`);
+    console.log(`[Scan] result: geo=${result.geo?result.geo.length:'null'}, vis=${result.visual?result.visual.length:'null'}, tex=${result.texture?result.texture.length:'null'}`);
+    if(result.geo) console.log(`[Scan] geo sample: [${result.geo.slice(0,5).map(v=>v.toFixed(4)).join(', ')}...]`);
+    if(result.visual) console.log(`[Scan] vis sample: [${result.visual.slice(0,5).map(v=>v.toFixed(4)).join(', ')}...]`);
+    if(result.texture) console.log(`[Scan] tex sample: [${result.texture.slice(0,5).map(v=>v.toFixed(4)).join(', ')}...]`);
+    setPhase(P.DONE); showPassiveUI(false); clearRaf(); vid().classList.remove('rdy');
     if(typeof onDone==='function')onDone(result);
   }
   function clearRaf(){ if(raf){cancelAnimationFrame(raf);raf=null;} }
 
   async function start(m,cb){
-    mode=m;onDone=cb;ph=P.INIT;detF=0;lostF=0;scanProg=0;geoEmbs=[];visualEmbs=[];lastLms=null;lastBbox=null;lightOK=true;
-    Object.assign(LV,{active:false,passed:false,history:[],baseline:null,progress:0,frames:0,ch:null});
-    sp(0);$('shdf').style.width='0%';$('cio').style.display='';$('ceo').classList.remove('show');
-    const lp=$('liveness-prompt');if(lp)lp.style.display='none';
-    vid().classList.remove('rdy');cvs().getContext('2d').clearRect(0,0,cvs().width,cvs().height);
+    generation++; mode=m; onDone=cb; ph=P.INIT; lightOK=true;
+    resetCaptureState(); resetTrackingState();
+    $('cio').style.display=''; $('ceo').classList.remove('show'); showPassiveUI(false);
+    vid().classList.remove('rdy'); cvs().getContext('2d').clearRect(0,0,cvs().width,cvs().height);
     setPhase(P.WAIT);st('Подготовка...','var(--ts)','');
-    if(m==='reg'){MA.active=true;maInit();}else{MA.active=false;const b=$('multi-angle-bar');if(b)b.style.display='none';}
     $('citxt').textContent='Подготовка системы...';
+    console.log('[Scan] Loading ML libraries...');
     await new Promise(resolve=>window.loadMLLibs(resolve));
+    console.log('[Scan] ML loaded, initializing MP + TF + Camera...');
     await Promise.all([initMP(),initTF(),openCam()]);
-    if(!stream)return;
+    if(!stream){
+      // Camera failed — show error overlay, hide init spinner
+      console.warn('[Scan] No camera stream — showing error overlay');
+      $('cio').style.display='none';
+      $('ceo').classList.add('show');
+      return;
+    }
     $('cio').style.display='none';setPhase(P.WAIT);
-    st('Поместите ладонь в рамку','#7A9185',m==='reg'?MA.HINTS[0]:'Раскройте ладонь, пальцы вперёд');
+    st('Держите руку естественно в зоне камеры','#7A9185',m==='reg'?'Система сама соберёт лучшие кадры':'Мы выберем лучший кадр автоматически');
     startLight();startRender();detectLoop();tick();
   }
 
-  function stop(){ ph=P.DONE;clearRaf();stopLight();lvStop();if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}vid().srcObject=null;cvs().getContext('2d').clearRect(0,0,cvs().width,cvs().height);const b=$('multi-angle-bar');if(b)b.style.display='none'; }
+  function stop(){ generation++; ph=P.DONE; clearRaf(); stopLight(); showPassiveUI(false); resetCaptureState(); resetTrackingState(); if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;} vid().srcObject=null; cvs().getContext('2d').clearRect(0,0,cvs().width,cvs().height); }
   function retry(){ $('ceo').classList.remove('show');start(mode,onDone); }
 
   return { start, stop, retry };
@@ -1479,7 +1783,7 @@ const UI = {
     list.innerHTML=profs.map((p,i)=>{
       const init=p.name.charAt(0).toUpperCase();
       const dt=new Date(p.ts).toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'});
-      const eng=p.visual&&p.visual.length>0?'🔒 Двойная биометрия':p.geo&&p.geo.length>0?'🔐 Биометрия':'Нет данных';
+      const eng=p.texture&&p.texture.length>0?'🔒 3-канальная биометрия':p.visual&&p.visual.length>0?'🔐 2-канальная биометрия':p.geo&&p.geo.length>0?'🖐 Геометрия ладони':'Нет данных';
       const thr=p.threshold>0?`Порог: ${(p.threshold*100).toFixed(0)}%`:'Стандартный порог';
       return `<div class="prof-card" style="animation:fi .2s ease ${i*35}ms both"><div class="prof-avatar">${init}</div><div class="prof-info"><div class="prof-name">${p.name}</div><div class="prof-meta">${dt}</div><div class="prof-badge">🧠 ${eng} · ${thr}</div></div><div class="prof-del" onclick="UI.askDel('${p.id}','${p.name.replace(/'/g,"\\'")}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#E53935" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`;
     }).join('');
@@ -1521,9 +1825,10 @@ const A = (() => {
     go(){
       if(v<=0){ const el=document.getElementById('adv'); if(el){el.style.color='var(--red)';setTimeout(()=>el.style.color='',700);} return; }
       const am=document.getElementById('s4am'); if(am)am.textContent='₽ '+v.toLocaleString('ru-RU');
+      App.syncConfirmScreen();
       Nav.to('s4','fwd');
     },
-    reset(){ s='0'; v=0; const el=document.getElementById('adv'); if(el)el.textContent='0'; },
+    reset(){ s='0'; v=0; const el=document.getElementById('adv'); if(el)el.textContent='0'; if(typeof App!=='undefined') App.clearIdentified(); },
     get val(){ return v; }
   };
 })();
@@ -1531,16 +1836,45 @@ const A = (() => {
 /* ── APP FLOWS ───────────────────────────────────────────── */
 const App = {
   _lastFlow: null,
+  syncConfirmScreen() {
+    const hint=document.getElementById('s4hint');
+    const btn=document.getElementById('pay-confirm-btn');
+    if(!hint||!btn) return;
+    if(App._identifiedUser){
+      hint.textContent=`Плательщик: ${App._identifiedUser.name}. Повторное сканирование не требуется`;
+      btn.innerHTML='Подтвердить оплату';
+    }else{
+      hint.textContent='Держите руку естественно в зоне камеры';
+      btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Подтвердить ладонью';
+    }
+  },
+  clearIdentified() {
+    App._identifiedUser=null;
+    App._identifiedScore=0;
+    App._identifiedThreshold=0;
+    App.syncConfirmScreen();
+  },
+  completePayment(match, score, threshold) {
+    const amt=A.val,now=new Date();
+    DB.txAdd('Кофейня «Берег»',amt,match.name);
+    document.getElementById('s5amt').textContent='₽ '+amt.toLocaleString('ru-RU');
+    document.getElementById('s5time').textContent=now.toLocaleDateString('ru-RU',{day:'2-digit',month:'long'})+', '+now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('s5who').textContent='Идентифицирован: '+match.name;
+    document.getElementById('s5sim').textContent=`${(score*100).toFixed(1)}%  (порог ${(threshold*100).toFixed(0)}%)`;
+    App.clearIdentified();
+    Nav.to('s5','fwd');
+  },
   startReg() {
+    App.clearIdentified();
     const name=document.getElementById('regname').value.trim();
     if(!name){const el=document.getElementById('regname');el.style.borderColor='var(--red)';el.focus();setTimeout(()=>el.style.borderColor='',1400);return;}
-    document.getElementById('scantitle').textContent='Регистрация ладони';
+    document.getElementById('scantitle').textContent='Пассивная регистрация';
     document.getElementById('scanbk').onclick=()=>{Scan.stop();Nav.to('sreg','back');};
     Nav.to('sscan','fwd');
     setTimeout(()=>{
       Scan.start('reg',result=>{
         Scan.stop();
-        if(!(result?.geo?.length||result?.visual?.length)){alert('Не удалось получить биометрию.\nПопробуйте в хорошем освещении.');Nav.to('sreg','back');return;}
+        if(!(result?.geo?.length||result?.visual?.length||result?.texture?.length)){alert('Не удалось получить биометрию.\nПопробуйте при равномерном освещении.');Nav.to('sreg','back');return;}
         const id=DB.add(name,result);
         // ══ Save calibrated threshold ══
         if(result._calibThreshold>0){
@@ -1560,13 +1894,17 @@ const App = {
   startPay() {
     App._lastFlow = 'pay';
     if(DB.count()===0){alert('Сначала зарегистрируйте ладонь.\n\nНажмите «← Назад» → «Подключить Palm Pay».');return;}
+    if(App._identifiedUser){
+      App.completePayment(App._identifiedUser,App._identifiedScore,App._identifiedThreshold);
+      return;
+    }
     document.getElementById('scantitle').textContent='Подтверждение оплаты';
     document.getElementById('scanbk').onclick=()=>{Scan.stop();Nav.to('s4','back');};
     Nav.to('sscan','fwd');
     setTimeout(()=>{
       Scan.start('pay',result=>{
         Scan.stop();
-        if(!(result?.geo?.length||result?.visual?.length)){document.getElementById('s5esc').textContent='Биометрия не получена';Nav.to('s5e','fwd');return;}
+        if(!(result?.geo?.length||result?.visual?.length||result?.texture?.length)){document.getElementById('s5esc').textContent='Биометрия не получена';Nav.to('s5e','fwd');return;}
         const ov=document.getElementById('pov'),tx=document.getElementById('ptxt'),pc=document.getElementById('ppct');
         ov.classList.add('show');let p=0;
         const steps=[{at:0,t:'Анализ ладони...'},{at:30,t:'Сравнение биометрии...'},{at:65,t:'Верификация...'},{at:90,t:'Готово...'}];
@@ -1575,17 +1913,13 @@ const App = {
           for(let i=steps.length-1;i>=0;i--){if(p>=steps[i].at){tx.textContent=steps[i].t;break;}}
           if(p>=100){
             clearInterval(tm);ov.classList.remove('show');
-            const res=Bio.identify(result.visual,result.geo);
+            const res=Bio.identify(result.visual,result.geo,result.texture);
             if(res.match){
-              const amt=A.val,now=new Date();
-              DB.txAdd('Кофейня «Берег»',amt,res.match.name);
-              document.getElementById('s5amt').textContent='₽ '+amt.toLocaleString('ru-RU');
-              document.getElementById('s5time').textContent=now.toLocaleDateString('ru-RU',{day:'2-digit',month:'long'})+', '+now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-              document.getElementById('s5who').textContent='Идентифицирован: '+res.match.name;
-              document.getElementById('s5sim').textContent=`${(res.score*100).toFixed(1)}%  (порог ${(res.threshold*100).toFixed(0)}%)`;
-              Nav.to('s5','fwd');
+              App.completePayment(res.match,res.score,res.threshold);
             }else{
-              document.getElementById('s5esc').textContent=`Совпадение ${(res.score*100).toFixed(1)}%  ·  порог ${(res.threshold*100).toFixed(0)}%`;
+              const reason = res.score < res.threshold ? 'Низкое совпадение' : 'Несогласованность каналов';
+              console.warn(`[App] Pay rejected: ${reason}, score=${(res.score*100).toFixed(1)}%, threshold=${(res.threshold*100).toFixed(0)}%`);
+              document.getElementById('s5esc').textContent=`${reason}: ${(res.score*100).toFixed(1)}% (порог ${(res.threshold*100).toFixed(0)}%)`;
               Nav.to('s5e','fwd');
             }
           }
@@ -1598,13 +1932,14 @@ const App = {
   quickPay() {
     App._lastFlow = 'quick';
     if(DB.count()===0){alert('Сначала зарегистрируйте ладонь.');return;}
-    document.getElementById('scantitle').textContent='Идентификация';
+    App.clearIdentified();
+    document.getElementById('scantitle').textContent='Пассивная идентификация';
     document.getElementById('scanbk').onclick=()=>{Scan.stop();Nav.to('s1','back');};
     Nav.to('sscan','fwd');
     setTimeout(()=>{
       Scan.start('pay',result=>{
         Scan.stop();
-        if(!(result?.geo?.length||result?.visual?.length)){
+        if(!(result?.geo?.length||result?.visual?.length||result?.texture?.length)){
           document.getElementById('s5esc').textContent='Биометрия не получена';
           Nav.to('s5e','fwd');return;
         }
@@ -1616,17 +1951,20 @@ const App = {
           for(let i=steps.length-1;i>=0;i--){if(p>=steps[i].at){tx.textContent=steps[i].t;break;}}
           if(p>=100){
             clearInterval(tm);ov.classList.remove('show');
-            const res=Bio.identify(result.visual,result.geo);
+            const res=Bio.identify(result.visual,result.geo,result.texture);
             if(res.match){
               // Save recognized user, go to amount entry
               App._identifiedUser=res.match;
               App._identifiedScore=res.score;
               App._identifiedThreshold=res.threshold;
+              App.syncConfirmScreen();
               UI._toast('✅ '+res.match.name+' — добро пожаловать!');
               Nav.to('s3','fwd');
             }else{
+              const reason = res.score < res.threshold ? 'Низкое совпадение' : 'Несогласованность каналов';
+              console.warn(`[App] QuickPay rejected: ${reason}, score=${(res.score*100).toFixed(1)}%, threshold=${(res.threshold*100).toFixed(0)}%`);
               document.getElementById('s5eh').textContent='Пользователь не найден';
-              document.getElementById('s5esc').textContent=`Совпадение: ${(res.score*100).toFixed(1)}% · Порог: ${(res.threshold*100).toFixed(0)}%`;
+              document.getElementById('s5esc').textContent=`${reason}: ${(res.score*100).toFixed(1)}% (порог ${(res.threshold*100).toFixed(0)}%)`;
               Nav.to('s5e','fwd');
             }
           }
@@ -1654,24 +1992,21 @@ const App = {
     try{
       document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.removeProperty('display');});
       const h=document.getElementById('s1');if(h){h.classList.add('active');}
+      App.syncConfirmScreen();
       UI.badge();
     }catch(e){console.error('[Init]',e);}
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',show);
   else show();
-  window.addEventListener('load',()=>{show();UI.badge();});
 })();
-document.addEventListener('contextmenu',e=>e.preventDefault());
+const _appEl=document.getElementById('app');if(_appEl)_appEl.addEventListener('contextmenu',e=>e.preventDefault());
 
-
-
-// Manifest and final init
+// Runtime platform hooks
 (function(){
   try {
-    const mf = {"name":"PalmPay","short_name":"PalmPay","display":"standalone","orientation":"portrait","background_color":"#ffffff","theme_color":"#2E7D32","start_url":"./palmpay.html"};
-    const b = new Blob([JSON.stringify(mf)],{type:'application/manifest+json'});
-    const el = document.getElementById('mf-link');
-    if(el) el.href = URL.createObjectURL(b);
+    if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+      window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('[SW]',err.message)));
+    }
   } catch(e){}
 })();
 

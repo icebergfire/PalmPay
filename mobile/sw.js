@@ -1,12 +1,12 @@
 // PalmPay Service Worker v1.0
 // Caches app shell + ML models for offline use
 
-const CACHE_NAME = 'palmpay-v1';
-const CACHE_ML   = 'palmpay-ml-v1';
+const CACHE_NAME = 'palmpay-v2';
+const CACHE_ML   = 'palmpay-ml-v2';
 
 // App shell — cache immediately
 const SHELL_FILES = [
-  './palmpay_app.html',
+  './palmpay.html',
   './manifest.json',
   'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap'
 ];

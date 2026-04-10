@@ -1,146 +1,199 @@
 # Техническая документация
 
-## Биометрический движок v2
+## 1. Архитектура
 
-### Архитектура
+PalmPay остаётся single-page mobile web client в [`../mobile/palmpay.html`](../mobile/palmpay.html), но scan engine теперь построен как passive pipeline.
 
-```
-Камера → MediaPipe Hands → 21 landmark
-                         ↓
-               GeoEmbedding (137-dim)
-                         ↓
-              ┌──────────┴──────────┐
-              │   Fused Score       │  cosine similarity
-              │   0.65 × visual     │  weighted average
-              │ + 0.35 × geo        │
-              └──────────┬──────────┘
-                         ↓
-Камера → Crop Palm → MobileNetV2 → VisualEmbedding (1280-dim)
+```text
+Camera stream
+  -> MediaPipe Hands
+  -> Continuous hand tracking
+  -> Palm ROI extraction
+  -> Quality scoring
+  -> Passive liveness / anti-spoof heuristics
+  -> Auto frame selection
+  -> Feature extraction
+  -> Matching
 ```
 
-### Геометрический вектор (137 dims)
-- Нормализованные координаты 21 точки (63)
-- Попарные расстояния ключевых суставов C(11,2)=55 (55)
-- Углы в суставах пальцев (12)
-- Соотношения длин пальцев (5)
-- Пропорции ладони (2)
+## 2. Основные модули
 
-### Визуальный вектор (1280 dims)
-- MobileNetV2 (ImageNet pretrained), penultimate layer
-- Вход: 224×224 кроп области ладони
-- L2-нормализован
+- `Nav`: анимированные переходы между экранами.
+- `DB`: локальное хранение профилей и транзакций.
+- `Bio`: feature extraction, embedding fusion, calibration и matching.
+- `Scan`: камера, tracking, quality scoring, passive liveness и auto-capture.
+- `UI`: рендер истории, профилей, badge и toast/modal.
+- `A`: ввод суммы.
+- `App`: registration / payment orchestration.
 
-### Калибровка порога
-```python
-selfSim = average(cosine(session_i, session_j) for all i≠j)
-threshold = clip(selfSim * 0.93, min=0.82, max=0.95)
-```
+## 3. Passive pipeline
 
-### Multi-angle регистрация
-- Сессия 1: ладонь прямо
-- Сессия 2: наклон влево ~15°
-- Сессия 3: наклон вправо ~15°
-- Финальный профиль: медиана всех трёх сессий
+### 3.1 Detection и tracking
 
-### Liveness detection
-- Отслеживание вертикального движения кончика указательного пальца
-- Порог: отклонение > 4% от базовой линии в 5+ кадрах подряд
-- Защита от фото и видеозаписи
+- MediaPipe Hands работает в непрерывном цикле.
+- Landmarks и bbox сглаживаются, чтобы уменьшить jitter.
+- Стейт `WAIT` используется только для входа в passive pipeline, без challenge-жестов.
 
----
+### 3.2 Quality scoring
 
-## База данных (мобильная версия)
+Каждый ROI оценивается по нескольким метрикам:
 
-### localStorage schema
+- размер ладони в кадре;
+- положение относительно центра;
+- openness ладони;
+- фронтальность;
+- освещение;
+- contrast;
+- sharpness;
+- line/edge density;
+- glare penalty.
+
+Итоговый `quality score` используется как gate для auto-capture.
+
+### 3.3 Auto frame selection
+
+Приложение не просит пользователя "сканировать" ладонь:
+
+- непрерывно анализирует stream;
+- ждёт достаточный `quality score`;
+- добирает несколько лучших кадров;
+- финальный embedding строит медианой по top candidates.
+
+## 4. Feature extraction
+
+Текущая реализация использует 3 канала.
+
+### 4.1 Geometry
+
+`geo` строится из landmarks:
+
+- нормализованные координаты;
+- расстояния между ключевыми точками;
+- углы суставов;
+- пропорции ладони и пальцев.
+
+### 4.2 Visual
+
+`visual` строится через MobileNetV2 на crop ладони `224x224`.
+
+### 4.3 Texture / palm lines
+
+`texture` строится lightweight-эвристикой на canvas:
+
+- ориентированные edge histogram;
+- cell-based energy map;
+- line strength в центральной зоне ладони;
+- contrast / edge density / glare-aware stats.
+
+Это не специализированная palm-line neural model, но уже лучше чистой геометрии для RGB-only сценария.
+
+## 5. Matching
+
+Matching теперь двухступенчатый:
+
+1. Coarse shortlist по `geo`.
+2. Fused score по `visual + texture + geo`.
+
+Веса текущей fusion-модели:
+
+- `visual = 0.40`
+- `texture = 0.35`
+- `geo = 0.25`
+
+Также есть:
+
+- margin check против ambiguous matches;
+- cross-channel agreement check;
+- персональный threshold на профиль.
+
+## 6. Passive liveness и anti-spoof
+
+Active gestures удалены. Вместо них используются RGB-эвристики:
+
+- micro-motion landmarks;
+- brightness variation во времени;
+- bbox scale variation;
+- openness variation;
+- glare / flatness risk.
+
+Этого достаточно для клиентского passive prototype, но это не финальный fintech-grade anti-spoofing.
+
+## 7. Регистрация и оплата
+
+### Регистрация
+
+- пользователь вводит имя;
+- открывается passive camera flow;
+- система автоматически собирает несколько лучших кадров;
+- сохраняются `geo`, `visual`, `texture`, `threshold`, `token`.
+
+### Оплата
+
+Есть два сценария:
+
+- `quickPay()`: сначала passive identity, затем ввод суммы без повторного сканирования;
+- `startPay()`: сначала сумма, затем passive confirmation.
+
+## 8. Данные
+
+### Профиль
+
 ```javascript
-// Профили: ключ 'pp4'
-[{
-  id: string,        // UTC timestamp base36
+{
+  id: string,
+  token: string,
   name: string,
-  geo: number[],     // 137-dim geometric embedding
-  visual: number[],  // 1280-dim visual embedding
-  threshold: number, // calibrated threshold (0 = default 0.88)
-  ts: ISO8601
-}]
+  geo: number[] | null,
+  visual: number[] | null,
+  texture: number[] | null,
+  threshold: number,
+  ts: string
+}
+```
 
-// Транзакции: ключ 'pp4_tx'
-[{
+### Транзакция
+
+```javascript
+{
   id: string,
   merchant: string,
-  amount: number,    // рубли
-  who: string,       // имя плательщика
-  ts: ISO8601
-}]
+  amount: number,
+  who: string,
+  ts: string
+}
 ```
 
----
+## 9. Производительность
 
-## API модулей (JS)
+Что уже сделано:
 
-### Bio
-```javascript
-Bio.loadTF()                          // загрузить MobileNet
-Bio.geoEmb(landmarks)                 // → float32[] геометрия
-Bio.getVisualEmb(video, bbox)         // → float32[] визуал (async)
-Bio.medianEmb(embeddings[])           // → медианный вектор
-Bio.calibrate(sessions[])             // → порог 0.82-0.95
-Bio.identify(visual, geo)             // → {match, score, threshold, name}
-Bio.ready                             // boolean
-```
+- async загрузка ML-библиотек;
+- warm-up MobileNet;
+- backend preference order `webgl -> wasm -> cpu`;
+- coarse geo shortlist до fused scoring;
+- capture только на high-quality passive frames.
 
-### DB
-```javascript
-DB.add(name, {geo, visual})           // → id
-DB.update(id, patch)                  // обновить поля профиля
-DB.remove(id)                         // удалить профиль
-DB.all()                              // → profiles[]
-DB.count()                            // → number
-DB.txAdd(merchant, amount, who)       // сохранить транзакцию
-DB.txAll()                            // → transactions[]
-DB.txClear()                          // очистить историю
-```
+Что ещё не сделано:
 
-### Scan
-```javascript
-Scan.start(mode, callback)            // mode: 'reg'|'pay'
-Scan.stop()                           // остановить сканирование
-Scan.retry()                          // повтор после ошибки камеры
-// callback(result) → {geo, visual, _calibThreshold}
-```
+- Web Worker / OffscreenCanvas pipeline;
+- native TFLite / CoreML;
+- production latency telemetry;
+- real vector index уровня HNSW / FAISS.
 
-### Nav
-```javascript
-Nav.to(screenId, direction)           // direction: 'fwd'|'back'
-// screens: s1, sreg, sscan, s3, s4, s5, s5e, shist, sprof
-```
+## 10. Security status
 
----
+Что есть сейчас:
 
-## Фазы сканирования
+- локальная обработка биометрии;
+- opaque `token` на профиль;
+- нет отправки данных на сервер.
 
-```
-INIT → WAIT → CAP → LIVENESS → SCAN → DONE
-        ↑________________________|
-              (если ладонь убрана)
-```
+Чего пока нет:
 
-| Фаза | Описание |
-|------|----------|
-| WAIT | Ожидание ладони в кадре |
-| CAP | Захват (flash + вибрация) |
-| LIVENESS | Движение пальца (5 кадров) |
-| SCAN | Сбор эмбеддингов, прогресс-бар |
-| DONE | Передача результата в callback |
+- secure at-rest encryption;
+- hardware-backed key storage;
+- device attestation;
+- backend token vault;
+- audit trail и policy engine.
 
----
-
-## Производительность
-
-| Метрика | Значение |
-|---------|----------|
-| Первая загрузка (с интернетом) | ~15-30 сек (ML модели) |
-| Повторный запуск (кеш) | < 2 сек |
-| Регистрация (3 сессии) | ~45-60 сек |
-| Идентификация | ~5-8 сек |
-| Размер приложения | 83 КБ (HTML) |
-| ML модели (кеш) | ~19 МБ |
+То есть текущая версия честно ближе к strong client-side prototype, а не к финальной fintech production architecture.

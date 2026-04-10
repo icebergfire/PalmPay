@@ -1,107 +1,98 @@
-# Инструкция по установке
+# Инструкция по запуску
 
-## Мобильная версия (iOS)
+## 1. Что нужно
 
-### Требования
-- iPhone с iOS 15 и выше
-- Safari браузер
-- Интернет для первого запуска (~19 МБ для загрузки ML-моделей)
+- iPhone c Safari или Android с Chrome.
+- Камера.
+- Интернет для первой загрузки ML-библиотек.
+- HTTPS для реального mobile usage и PWA installation.
 
-### Установка
-1. Передай файл `palmpay.html` на iPhone (Telegram, AirDrop, iCloud)
-2. Открой файл в **Safari** (не Chrome, не Firefox)
-3. Safari → кнопка «Поделиться» → **«На экран "Домой"»**
-4. При первом сканировании разреши доступ к камере
+## 2. Локальный запуск
 
-### Права камеры (если не спросил)
-```
-Настройки → Safari → Камера → Разрешить
-```
-
----
-
-## Мобильная версия (Android)
-
-### Требования
-- Android 8+ 
-- Chrome браузер
-
-### Установка
-1. Передай файл `palmpay.html` на телефон
-2. Открой в **Chrome**
-3. Меню ⋮ → **«Добавить на главный экран»**
-4. Разреши доступ к камере
-
----
-
-## Развёртывание на веб-сервере (рекомендуется)
-
-Для полноценной работы PWA (Service Worker, офлайн-режим) нужен HTTPS:
+Для локальной проверки интерфейса и client logic:
 
 ```bash
-# Nginx конфиг
+cd mobile
+python3 -m http.server 5504
+```
+
+Открывайте:
+
+```text
+http://localhost:5504/palmpay.html
+```
+
+`localhost` подходит для desktop debugging. Для теста на телефоне через другую сеть нужен `https://`.
+
+## 3. Развёртывание
+
+Публикуется каталог `mobile/` целиком:
+
+```text
+palmpay.html
+manifest.json
+sw.js
+```
+
+Пример Nginx:
+
+```nginx
 server {
     listen 443 ssl;
     server_name yourdomain.com;
-    root /var/www/palmpay;
-    
+    root /var/www/palmpay/mobile;
+    index palmpay.html;
+
     location / {
         try_files $uri $uri/ /palmpay.html;
     }
-    
-    # Важно для Service Worker
-    add_header Service-Worker-Allowed "/";
 }
 ```
 
-Скопируй на сервер:
-```
-palmpay.html
-sw.js
-manifest.json
-```
+## 4. PWA
 
----
+Текущая версия:
 
-## Десктопная версия
+- использует `manifest.json`;
+- регистрирует `sw.js` на `http(s)` runtime;
+- кеширует shell и ML-артефакты через service worker.
 
-### Windows
-```
-Двойной клик: run_windows.bat
-```
+## 5. Как проверить pipeline
 
-### macOS
-```bash
-chmod +x run_macos.sh
-./run_macos.sh
-```
+### Регистрация
 
-### Linux
-```bash
-chmod +x run_linux.sh
-./run_linux.sh
-```
+1. Откройте приложение.
+2. Нажмите кнопку регистрации.
+3. Введите имя.
+4. Держите руку естественно в зоне камеры.
+5. Дождитесь auto-capture и сохранения профиля.
 
-### Ручная установка
-```bash
-cd desktop/
-python3 -m venv venv
-source venv/bin/activate       # Windows: venv\Scripts\activate
-pip install PyQt5 opencv-python mediapipe numpy
-python3 main.py
-```
+### Оплата
 
-### Проблема с PyQt5 на Mac M1/M2/M3
-```bash
-pip install PyQt6 opencv-python mediapipe numpy
-# Замени во всех файлах ui/: from PyQt5 → from PyQt6
-```
+Вариант 1:
 
----
+1. Нажмите "Оплатить ладонью".
+2. Дождитесь passive identity.
+3. Введите сумму.
+4. Подтвердите списание без второго сканирования.
 
-## Первый запуск
+Вариант 2:
 
-1. **Зарегистрируй ладонь** → «Подключить Palm Pay» → введи имя → сканируй (3 позиции)
-2. **Оплата** → введи сумму → поднеси ладонь → подтверди живость
-3. **История** → нижняя навигация → «История операций»
-4. **Профили** → нижняя навигация → «Профили ладони»
+1. Введите сумму.
+2. Откройте passive confirmation.
+3. Держите руку в зоне камеры.
+4. Дождитесь auto-capture и matching.
+
+## 6. Что смотреть при отладке
+
+- `quality score`: рука должна быть достаточно крупной, открытой и без сильных бликов.
+- `liveness`: в живом видеопотоке должно быть естественное микро-движение.
+- `spoof risk`: фото/экран должны давать деградацию passive liveness.
+- `matching`: проверяйте margin и threshold в success/error flow.
+
+## 7. Ограничения
+
+- Хранение по-прежнему в `localStorage`.
+- При очистке браузерных данных профили и история теряются.
+- Без CDN first-run не поднимет visual branch.
+- Для production-нормы нужны native secure storage, telemetry и полноценный anti-spoof classifier.

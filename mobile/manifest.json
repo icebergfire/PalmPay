@@ -1,8 +1,8 @@
 {
   "name": "PalmPay — Биометрический терминал",
   "short_name": "PalmPay",
-  "description": "Оплата ладонью через камеру смартфона",
-  "start_url": "./palmpay_app.html",
+  "description": "Пассивное распознавание ладони через камеру смартфона",
+  "start_url": "./palmpay.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
@@ -16,8 +16,5 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["finance", "utilities"],
-  "screenshots": [],
-  "related_applications": [],
-  "prefer_related_applications": false
+  "categories": ["finance", "utilities"]
 }
