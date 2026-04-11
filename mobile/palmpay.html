@@ -44,7 +44,9 @@
 }
 
 html,body{
-  height:100%;width:100%;
+  height:100%;
+  height:100dvh;
+  width:100%;
   background:#f0f4f0;
   font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;
   overflow:hidden;
@@ -55,7 +57,9 @@ html,body{
 
 /* ── App shell — centered card on large screens ── */
 #app{
-  width:100%;height:100%;
+  width:100%;
+  height:100%;
+  height:100dvh;
   position:relative;
   overflow:hidden;
   display:flex;
@@ -68,7 +72,9 @@ html,body{
 #shell{
   width:var(--max-w);
   height:100%;
+  height:100dvh;
   max-height:100%;
+  max-height:100dvh;
   position:relative;
   overflow:hidden;
   background:#fff;
@@ -163,17 +169,19 @@ html,body{
 .btn svg,.li svg,.bk svg,.prof-del svg{display:block;flex-shrink:0}
 
 /* ─── S1 WELCOME ─── */
-#s1{overflow-y:auto}
+#s1{overflow:hidden}
 .s1w{
-  padding:var(--sp-md) var(--sp-lg) var(--sp-xl);
+  flex:1;
+  min-height:0;
+  padding:max(var(--sp-sm), env(safe-area-inset-top, 0px)) var(--sp-lg) var(--sp-md);
   display:flex;flex-direction:column;
-  min-height:100%;
-  -webkit-overflow-scrolling:touch;
+  justify-content:space-between;
+  gap:var(--sp-sm);
 }
 .s1il{
   flex:1;display:flex;align-items:center;justify-content:center;
-  padding:clamp(16px,4vw,32px) 0 clamp(12px,3vw,24px);
-  position:relative;min-height:clamp(180px,40vh,280px);
+  padding:clamp(8px,2vh,18px) 0 clamp(6px,1.6vh,14px);
+  position:relative;min-height:clamp(140px,32vh,240px);
 }
 .s1pm{
   width:clamp(100px,24vw,140px);height:clamp(168px,40vw,236px);
@@ -202,9 +210,11 @@ html,body{
   color:var(--td);letter-spacing:-.4px;
   margin-bottom:var(--sp-sm);
 }
-.s1sb{font-size:var(--fs-sm);color:var(--ts);line-height:1.65;margin-bottom:var(--sp-lg)}
-.s1sc{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:var(--sp-sm)}
+.s1sb{font-size:var(--fs-sm);color:var(--ts);line-height:1.55;margin-bottom:var(--sp-md)}
+.s1sc{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:0}
 .s1sc span{font-size:var(--fs-xs);color:var(--tm)}
+#s1-btn-pay{margin-top:0 !important}
+#s1-prof-badge,.s1hd{display:none !important}
 
 /* ─── S-REG ─── */
 #sreg{overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -290,10 +300,39 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
 #s3{background:#fff}
 .s3b{flex:1;padding:var(--sp-md) var(--sp-md) clamp(8px,2vw,14px);display:flex;flex-direction:column;overflow:hidden}
 .al{font-size:var(--fs-xs);font-weight:600;letter-spacing:.8px;color:var(--ts);text-transform:uppercase;margin-bottom:clamp(8px,2vw,12px)}
-.ad{display:flex;align-items:baseline;gap:6px;padding:clamp(10px,2.5vw,14px) 0 clamp(12px,3vw,16px);border-bottom:2.5px solid var(--g);margin-bottom:clamp(10px,2.5vw,16px)}
+.ad{
+  position:relative;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:end;
+  column-gap:10px;
+  padding:clamp(10px,2.5vw,14px) 0 clamp(12px,3vw,16px);
+  border-bottom:2.5px solid var(--g);
+  margin-bottom:clamp(10px,2.5vw,16px);
+}
 .ac{font-size:clamp(22px,5.5vw,32px);font-weight:300;color:var(--g)}
-.av{font-family:'DM Serif Display',serif;font-size:clamp(38px,10vw,60px);letter-spacing:-2px;line-height:1;color:var(--td);min-width:40px}
-.acu{width:2.5px;height:clamp(40px,9vw,56px);background:var(--g);border-radius:2px;animation:bl 1s step-end infinite;margin-left:2px}
+.ad-display{
+  min-width:0;
+  min-height:clamp(44px,10vw,60px);
+  display:flex;
+  align-items:flex-end;
+  overflow:hidden;
+}
+.adv-canvas{
+  display:block;
+  width:100%;
+  height:clamp(44px,10vw,60px);
+}
+.av-input-hidden{
+  position:absolute;
+  opacity:0;
+  width:1px;
+  height:1px;
+  border:none;
+  padding:0;
+  inset:auto auto 0 0;
+}
+.acu{width:2.5px;height:clamp(40px,9vw,56px);background:var(--g);border-radius:2px;animation:bl 1s step-end infinite}
 .qr{display:flex;gap:clamp(6px,1.5vw,10px);margin-bottom:clamp(10px,2.5vw,16px)}
 .qb{flex:1;padding:clamp(8px,2vw,10px) 4px;background:var(--gp);border:none;border-radius:var(--r-sm);font-family:-apple-system,'DM Sans',sans-serif;font-size:var(--fs-sm);font-weight:600;color:var(--g);cursor:pointer;min-height:var(--touch)}
 .qb:active{background:var(--gl)}
@@ -463,6 +502,35 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
   .srb{gap:10px}
 }
 /* ─── Small phones 320px ─── */
+@media(max-height:760px){
+  .s1w{
+    padding-top:max(8px, env(safe-area-inset-top, 0px));
+    padding-bottom:8px;
+    gap:var(--sp-xs);
+  }
+  .s1il{
+    min-height:clamp(120px,26vh,190px);
+    padding:6px 0;
+  }
+  .s1pm{
+    width:clamp(88px,22vw,120px);
+    height:clamp(148px,36vw,204px);
+  }
+  .s1hd svg{width:clamp(56px,14vw,80px)}
+  .s1h1{
+    line-height:1.15;
+    margin-bottom:var(--sp-xs);
+  }
+  .s1sb{
+    line-height:1.45;
+    margin-bottom:var(--sp-sm);
+  }
+  #s1 .btn{
+    padding:12px 14px;
+    min-height:44px;
+  }
+  .bnav-btn{padding:8px 4px}
+}
 @media(max-width:360px){
   :root{--sp-md:12px;--sp-lg:18px}
   .av{font-size:clamp(32px,9vw,44px)}
@@ -511,7 +579,7 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
       Подключить Palm Pay
     </button>
     <button id="s1-btn-pay" class="btn bg" style="display:none;margin-top:10px;background:linear-gradient(135deg,#43A047,#2E7D32)" onclick="App.quickPay()">
-      🤚 Оплатить ладонью
+      Оплатить ладонью
     </button>
     <div class="s1sc">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="#B0C4B8"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4z"/></svg>
@@ -543,12 +611,12 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
   </div>
   <div class="srb">
     <div>
-      <div class="fl">Ваше имя</div>
-      <input class="fi" id="regname" type="text" placeholder="Введите имя..." autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
+      <div class="fl">Введите ваше ФИО</div>
+      <input class="fi" id="regname" type="text" placeholder="Введите ваше ФИО..." autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
     </div>
     <div class="snote">🤚 Мы запишем уникальные биометрические признаки вашей ладони. Данные хранятся только на вашем устройстве.</div>
     <div class="ssteps">
-      <div class="sstep"><div class="snum">1</div>Введите своё имя</div>
+      <div class="sstep"><div class="snum">1</div>Введите ваше ФИО</div>
       <div class="sstep"><div class="snum">2</div>Держите руку естественно в зоне камеры</div>
       <div class="sstep"><div class="snum">3</div>Система сама проверит живость и выберет лучшие кадры</div>
       <div class="sstep"><div class="snum">4</div>Профиль сохранится автоматически</div>
@@ -571,11 +639,9 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
     <span class="tt" id="scantitle">Пассивное распознавание</span>
     <!-- Lighting indicator -->
     <div id="light-indicator" style="display:none;align-items:center;gap:5px;flex-shrink:0">
-      <div id="light-icon" style="font-size:14px">💡</div>
       <span id="light-text" style="font-size:11px;font-weight:600;color:var(--ts)"></span>
     </div>
     <div id="cam-dist" class="camdist">
-      <span id="cam-dist-icon">📏</span>
       <span id="cam-dist-text">Дистанция OK</span>
     </div>
   </div>
@@ -602,7 +668,6 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
     <!-- Liveness prompt overlay -->
     <div id="liveness-prompt" class="lvp">
       <div class="lvp-box" style="animation:fi .3s ease both">
-        <div id="liveness-emoji" style="font-size:28px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;width:100%">🛡️</div>
         <div id="liveness-msg" style="color:#fff;font-size:13px;font-weight:600;white-space:nowrap;text-align:center;width:100%">Пассивная проверка живости</div>
         <div style="margin-top:8px;height:3px;background:rgba(165,214,167,.2);border-radius:2px;overflow:hidden;width:100%">
           <div id="liveness-bar" style="height:100%;width:0%;background:#A5D6A7;border-radius:2px;transition:width .15s ease"></div>
@@ -615,7 +680,7 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
       <div class="cet">Нет доступа к камере</div>
       <div class="cem" id="cemsg">Разрешите доступ к камере в настройках браузера.</div>
       <div style="width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px">
-        <button class="btn bg" onclick="Scan.retry()" style="width:100%">🔄 Повторить</button>
+        <button class="btn bg" onclick="Scan.retry()" style="width:100%">Повторить</button>
         <button class="btn bp" onclick="Scan.stop();Nav.to('sreg','back')" style="width:100%">← Назад</button>
       </div>
     </div>
@@ -637,7 +702,14 @@ canvas#sc{position:absolute;inset:0;width:100%;height:100%}
   </div>
   <div class="s3b">
     <div class="al">Сумма оплаты</div>
-    <div class="ad"><span class="ac">₽</span><span class="av" id="adv">0</span><div class="acu"></div></div>
+    <div class="ad" onclick="A.focus()">
+      <span class="ac">₽</span>
+      <div class="ad-display" aria-live="polite" aria-atomic="true">
+        <canvas class="adv-canvas" id="adv"></canvas>
+      </div>
+      <div class="acu"></div>
+      <input class="av-input-hidden" id="adv-input" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" value="0" aria-label="Сумма оплаты">
+    </div>
     <div class="qr">
       <button class="qb" onclick="A.q(500)">+ 500</button>
       <button class="qb" onclick="A.q(1000)">+ 1 000</button>
@@ -1261,47 +1333,43 @@ const Scan = (() => {
   function sp(pct,col='#2E7D32'){ const b=$('spb'); if(!b)return; b.style.width=pct+'%'; b.style.background=col; }
   function showPassiveUI(show){ const p=$('liveness-prompt'); if(p) p.style.display=show?'flex':'none'; }
   function updatePassiveUI(metrics, live){
-    const m=$('liveness-msg'),b=$('liveness-bar'),e=$('liveness-emoji');
+    const m=$('liveness-msg'),b=$('liveness-bar');
     const progress=Math.round(100*clamp01((metrics?.quality||0)*0.55 + (live?.score||0)*0.45));
-    if(e)e.textContent=live?.spoofRisk>0.62?'🛑':progress>70?'✅':'🛡️';
     if(m)m.textContent=live?.spoofRisk>0.62?'Нужен живой поток, фото не подойдёт':progress>70?'Живость подтверждена, выбираем кадр':'Пассивная проверка живости и качества';
     if(b)b.style.width=progress+'%';
   }
 
   function analyzeLighting(){
-    const ic=$('light-icon'),tx=$('light-text'),ind=$('light-indicator');
+    const tx=$('light-text'),ind=$('light-indicator');
     if(!ind) return;
     if(!lastMetrics){ind.style.display='none';lightOK=true;return;}
     ind.style.display='flex';
     if(lastMetrics.brightness<65){
-      ic.textContent='🔦';tx.textContent='Темно';tx.style.color='#E53935';lightOK=false;
+      tx.textContent='Темно';tx.style.color='#E53935';lightOK=false;
     }else if(lastMetrics.brightness>205||lastMetrics.glare>0.18){
-      ic.textContent='☀️';tx.textContent='Блики';tx.style.color='#F57C00';lightOK=false;
+      tx.textContent='Блики';tx.style.color='#F57C00';lightOK=false;
     }else{
-      ic.textContent='✓';tx.textContent='Свет OK';tx.style.color='#2E7D32';lightOK=true;
+      tx.textContent='Свет OK';tx.style.color='#2E7D32';lightOK=true;
     }
   }
   function startLight(){ stopLight(); analyzeLighting(); lightTimer=setInterval(analyzeLighting,650); }
   function stopLight(){ if(lightTimer){clearInterval(lightTimer);lightTimer=null;} const ind=$('light-indicator'); if(ind)ind.style.display='none'; }
 
   function camDist(state){
-    const wrap=$('cam-dist'), icon=$('cam-dist-icon'), txt=$('cam-dist-text');
-    if(!wrap||!icon||!txt)return;
+    const wrap=$('cam-dist'), txt=$('cam-dist-text');
+    if(!wrap||!txt)return;
     if(state==='none'){
       wrap.style.display='none';
       return;
     }
     wrap.style.display='flex';
     if(state==='far'){
-      icon.textContent='↔️';
       txt.textContent='Слишком далеко';
       txt.style.color='#F57C00';
     }else if(state==='close'){
-      icon.textContent='↔️';
       txt.textContent='Слишком близко';
       txt.style.color='#F57C00';
     }else{
-      icon.textContent='📏';
       txt.textContent='Дистанция OK';
       txt.style.color='var(--ts)';
     }
@@ -1609,7 +1677,7 @@ const Scan = (() => {
         lostF++;
         if(lostF>MAX_LOST){
           resetCaptureState(); resetTrackingState(); showPassiveUI(false); setPhase(P.WAIT);
-          st('⚠ Рука вне кадра — начните снова','#E53935','');
+          st('Рука вне кадра — начните снова','#E53935','');
         }else{
           st('Не уводите руку из кадра','#F57C00',`${lostF}/${MAX_LOST}`);
         }
@@ -1626,13 +1694,13 @@ const Scan = (() => {
     const size=Math.max(lastBbox.w,lastBbox.h);
     if(size<0.14){
       camDist('far'); detF=Math.max(0,detF-1); if($('shdf')) $('shdf').style.width=(detF/DET*100)+'%';
-      st('↔️ Подвиньте руку ближе','#F57C00','Слишком далеко');
+      st('Подвиньте руку ближе','#F57C00','Слишком далеко');
       setTimeout(tick,LOOP_DELAY);
       return;
     }
     if(size>0.78){
       camDist('close'); detF=Math.max(0,detF-1); if($('shdf')) $('shdf').style.width=(detF/DET*100)+'%';
-      st('↔️ Отдалите руку','#F57C00','Слишком близко');
+      st('Отдалите руку','#F57C00','Слишком близко');
       setTimeout(tick,LOOP_DELAY);
       return;
     }
@@ -1640,7 +1708,7 @@ const Scan = (() => {
 
     if(ph===P.WAIT){
       if(!lightOK){
-        st('🔦 Добавьте равномерный свет','#E53935','Без бликов и резких теней');
+        st('Добавьте равномерный свет','#E53935','Без бликов и резких теней');
         setTimeout(tick,LOOP_DELAY);
         return;
       }
@@ -1672,7 +1740,7 @@ const Scan = (() => {
     lastLive=live;
     updatePassiveUI(metrics,live);
     if(live.spoofRisk>0.68){
-      st('🛑 Высокий риск спуфинга','#E53935','Нужен живой видеопоток без фото и экранов');
+      st('Высокий риск спуфинга','#E53935','Нужен живой видеопоток без фото и экранов');
     }else if(acceptedFrames===0){
       st('Пассивная проверка живости','#1565C0',`Liveness: ${Math.round(live.score*100)}%`);
     }else{
@@ -1783,9 +1851,9 @@ const UI = {
     list.innerHTML=profs.map((p,i)=>{
       const init=p.name.charAt(0).toUpperCase();
       const dt=new Date(p.ts).toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'});
-      const eng=p.texture&&p.texture.length>0?'🔒 3-канальная биометрия':p.visual&&p.visual.length>0?'🔐 2-канальная биометрия':p.geo&&p.geo.length>0?'🖐 Геометрия ладони':'Нет данных';
+      const eng=p.texture&&p.texture.length>0?'3-канальная биометрия':p.visual&&p.visual.length>0?'2-канальная биометрия':p.geo&&p.geo.length>0?'Геометрия ладони':'Нет данных';
       const thr=p.threshold>0?`Порог: ${(p.threshold*100).toFixed(0)}%`:'Стандартный порог';
-      return `<div class="prof-card" style="animation:fi .2s ease ${i*35}ms both"><div class="prof-avatar">${init}</div><div class="prof-info"><div class="prof-name">${p.name}</div><div class="prof-meta">${dt}</div><div class="prof-badge">🧠 ${eng} · ${thr}</div></div><div class="prof-del" onclick="UI.askDel('${p.id}','${p.name.replace(/'/g,"\\'")}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#E53935" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`;
+      return `<div class="prof-card" style="animation:fi .2s ease ${i*35}ms both"><div class="prof-avatar">${init}</div><div class="prof-info"><div class="prof-name">${p.name}</div><div class="prof-meta">${dt}</div><div class="prof-badge">${eng} · ${thr}</div></div><div class="prof-del" onclick="UI.askDel('${p.id}','${p.name.replace(/'/g,"\\'")}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#E53935" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`;
     }).join('');
   },
 
@@ -1809,7 +1877,7 @@ const UI = {
 
   _toast(msg){
     const t=document.createElement('div');
-    t.style.cssText='position:absolute;bottom:calc(80px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#1A2520;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:999;white-space:nowrap;animation:fi .25s ease both;pointer-events:none;';
+    t.style.cssText='position:absolute;bottom:calc(80px + env(safe-area-inset-bottom,0px));left:12px;right:12px;background:#1A2520;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:999;text-align:center;white-space:normal;overflow-wrap:anywhere;animation:fi .25s ease both;pointer-events:none;';
     t.textContent=msg;document.getElementById('shell').appendChild(t);setTimeout(()=>t.remove(),2200);
   }
 };
@@ -1817,21 +1885,99 @@ const UI = {
 /* ── AMOUNT INPUT ─────────────────────────────────────────── */
 const A = (() => {
   let s='0', v=0;
-  function upd(){ v=parseInt(s)||0; const el=document.getElementById('adv'); if(el)el.textContent=v.toLocaleString('ru-RU'); }
+  const MAX_LEN = 7;
+  let drawColor = null;
+  function canvasEl(){ return document.getElementById('adv'); }
+  function inputEl(){ return document.getElementById('adv-input'); }
+  function sanitize(val){
+    const digits=String(val??'').replace(/\D/g,'').slice(0,MAX_LEN);
+    return digits || '0';
+  }
+  function fitCanvas(canvas){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.round(rect.width * dpr));
+    const height = Math.max(1, Math.round(rect.height * dpr));
+    if(canvas.width !== width || canvas.height !== height){
+      canvas.width = width;
+      canvas.height = height;
+    }
+    return { width, height, dpr };
+  }
+  function draw(formatted){
+    const canvas = canvasEl();
+    if(!canvas) return;
+    const { width, height, dpr } = fitCanvas(canvas);
+    const ctx = canvas.getContext('2d');
+    if(!ctx) return;
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,width,height);
+    ctx.scale(dpr,dpr);
+    const cssWidth = width / dpr;
+    const cssHeight = height / dpr;
+    const fontSize = Math.max(38, Math.min(60, Math.round(cssWidth * 0.12)));
+    ctx.font = `400 ${fontSize}px "DM Serif Display", serif`;
+    ctx.fillStyle = drawColor || '#1A2520';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(formatted, 0, cssHeight - 4);
+  }
+  function syncCaret(input){
+    if(!input || document.activeElement!==input) return;
+    const pos=input.value.length;
+    try{ input.setSelectionRange(pos,pos); }catch(_){}
+  }
+  function upd(){
+    s=sanitize(s);
+    v=parseInt(s,10)||0;
+    const input=inputEl();
+    const formatted=v.toLocaleString('ru-RU');
+    draw(formatted);
+    if(input){
+      input.value=formatted;
+      syncCaret(input);
+    }
+  }
   return {
-    p(d){ if(s==='0')s=d; else if(s.length<7)s+=d; upd(); },
+    p(d){ if(s==='0')s=String(d); else if(s.length<MAX_LEN)s+=String(d); upd(); },
     d(){ s=s.length<=1?'0':s.slice(0,-1); upd(); },
-    q(n){ s=String((parseInt(s)||0)+n); upd(); },
+    q(n){ s=sanitize((parseInt(s,10)||0)+n); upd(); },
+    focus(){ const input=inputEl(); if(input) input.focus(); },
+    bind(){
+      const input=inputEl();
+      if(!input || input.dataset.bound==='1') return;
+      input.dataset.bound='1';
+      input.addEventListener('input',e=>{
+        s=sanitize(e.target.value);
+        upd();
+      });
+      input.addEventListener('focus',()=>syncCaret(input));
+      input.addEventListener('click',()=>syncCaret(input));
+      input.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){
+          e.preventDefault();
+          this.go();
+        }
+      });
+      window.addEventListener('resize',()=>upd());
+      upd();
+    },
     go(){
-      if(v<=0){ const el=document.getElementById('adv'); if(el){el.style.color='var(--red)';setTimeout(()=>el.style.color='',700);} return; }
+      if(v<=0){
+        drawColor = '#E53935';
+        upd();
+        setTimeout(()=>{ drawColor = null; upd(); },700);
+        return;
+      }
       const am=document.getElementById('s4am'); if(am)am.textContent='₽ '+v.toLocaleString('ru-RU');
       App.syncConfirmScreen();
       Nav.to('s4','fwd');
     },
-    reset(){ s='0'; v=0; const el=document.getElementById('adv'); if(el)el.textContent='0'; if(typeof App!=='undefined') App.clearIdentified(); },
+    reset(){ s='0'; v=0; upd(); if(typeof App!=='undefined') App.clearIdentified(); },
     get val(){ return v; }
   };
 })();
+window.A = A;
 
 /* ── APP FLOWS ───────────────────────────────────────────── */
 const App = {
@@ -1882,11 +2028,7 @@ const App = {
           console.log(`[App] Calibrated threshold for ${name}: ${(result._calibThreshold*100).toFixed(1)}%`);
         }
         UI.badge();
-        const shell=document.getElementById('shell')||document.body;
-        const t=document.createElement('div');
-        t.style.cssText='position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#2E7D32;color:#fff;padding:12px 24px;border-radius:28px;font-size:14px;font-weight:600;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(46,125,50,.35);animation:fi .25s ease both;';
-        t.textContent=`✅ ${name} успешно зарегистрирован`;
-        shell.appendChild(t);setTimeout(()=>{t.remove();Nav.to('s1','back');},2500);
+        Nav.to('s1','back');
       });
     },320);
   },
@@ -1992,6 +2134,7 @@ const App = {
     try{
       document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.removeProperty('display');});
       const h=document.getElementById('s1');if(h){h.classList.add('active');}
+      A.bind();
       App.syncConfirmScreen();
       UI.badge();
     }catch(e){console.error('[Init]',e);}
@@ -2005,7 +2148,20 @@ const _appEl=document.getElementById('app');if(_appEl)_appEl.addEventListener('c
 (function(){
   try {
     if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
-      window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('[SW]',err.message)));
+      window.addEventListener('load',async ()=>{
+        try{
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(reg=>reg.unregister()));
+          if('caches' in window){
+            const keys = await caches.keys();
+            await Promise.all(keys
+              .filter(key=>key.startsWith('palmpay-'))
+              .map(key=>caches.delete(key)));
+          }
+        }catch(err){
+          console.warn('[SW cleanup]',err.message);
+        }
+      });
     }
   } catch(e){}
 })();
