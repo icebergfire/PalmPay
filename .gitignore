@@ -208,4 +208,4 @@ __marimo__/
 
 # Visual Studio Code 
 .vscode/
-venv/
+venv/.DS_Store
